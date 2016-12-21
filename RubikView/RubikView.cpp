@@ -111,8 +111,10 @@ void DrawGLScene(GLFWwindow* Window)
 	glLoadIdentity();					// Reset The Current Modelview Matrix
 
 	glTranslatef(0.0f, 0.0f, -21.0f);			// Translate Into The Screen 7.0 Units
-	glRotatef(pGLState->m_RotAngle, 0.0f, 1.0f, 0.0f);		// Rotate The cube around the Y axis
-	glRotatef(pGLState->m_RotAngle, 1.0f, 1.0f, 1.0f);
+	//glRotatef(pGLState->m_RotAngle, 0.0f, 1.0f, 0.0f);		// Rotate The cube around the Y axis
+	//glRotatef(pGLState->m_RotAngle, 1.0f, 1.0f, 1.0f);
+	glRotatef(-30.0f, 0.0f, 1.0f, 0.0f);
+	glRotatef( 30.0f, 1.0f, 0.0f, 0.0f);
 
 	glBegin(GL_QUADS);
 
@@ -160,29 +162,31 @@ void DrawGLScene(GLFWwindow* Window)
 
 	glEnd();
 
-	pGLState->m_RotAngle += 0.5f;
+	//pGLState->m_RotAngle += 0.5f;
+}
+
+static void HandleHeldKeys(GLFWwindow* Window)
+{
+	SGLState* pGLState = static_cast<SGLState*>(glfwGetWindowUserPointer(Window));
+
+	//if (glfwGetKey(Window, GLFW_KEY_LEFT) == GLFW_PRESS)
+	//{
+	//	pGLState->m_RotAngle += 0.8f;
+	//}
 }
 
 static void KeyCallback(GLFWwindow* Window, int Key, int ScanCode, int Action, int Mods)
 {
-	SGLState* pGLState = static_cast<SGLState*>(glfwGetWindowUserPointer(Window));
-
-	switch (Action)
+	if (Action == GLFW_PRESS)
 	{
-	case GLFW_PRESS:
-	case GLFW_REPEAT:
-		switch(Key)
+		SGLState* pGLState = static_cast<SGLState*>(glfwGetWindowUserPointer(Window));
+
+		switch (Key)
 		{
 		case GLFW_KEY_ESCAPE:
 			glfwSetWindowShouldClose(Window, GLFW_TRUE);
-		break;
+			break;
 		}
-	break;
-
-	case GLFW_RELEASE:
-
-	break;
-
 	}
 }
 
@@ -226,6 +230,9 @@ int main()
 
 		// Poll for and process events
 		glfwPollEvents();
+
+		HandleHeldKeys(Window);
+
 	}
 
 	glfwTerminate();

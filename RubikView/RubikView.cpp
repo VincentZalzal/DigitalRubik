@@ -2,6 +2,20 @@
 #include <GLFW/glfw3.h>
 #include "../Cube/cube.h"
 
+struct SGLState
+{
+	GLfloat m_RotAngle;
+
+	SGLState();
+};
+
+SGLState::SGLState()
+{
+	// Cube initialization
+	Cube::Reset();
+	m_RotAngle = 0.0f;
+}
+
 // Resize And Initialize The GL Window
 GLvoid ReSizeGLScene(int width, int height)
 {
@@ -89,16 +103,16 @@ void DrawFace(GLfloat px, GLfloat py, GLfloat pz, // first corner
 }
 
 // Here's Where We Do All The Drawing
-void DrawGLScene()
+void DrawGLScene(GLFWwindow* Window)
 {
-	static GLfloat s_RotAngle = 0.0;
+	SGLState* pGLState = static_cast<SGLState*>(glfwGetWindowUserPointer(Window));
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
 	glLoadIdentity();					// Reset The Current Modelview Matrix
 
 	glTranslatef(0.0f, 0.0f, -21.0f);			// Translate Into The Screen 7.0 Units
-	glRotatef(s_RotAngle, 0.0f, 1.0f, 0.0f);		// Rotate The cube around the Y axis
-	glRotatef(s_RotAngle, 1.0f, 1.0f, 1.0f);
+	glRotatef(pGLState->m_RotAngle, 0.0f, 1.0f, 0.0f);		// Rotate The cube around the Y axis
+	glRotatef(pGLState->m_RotAngle, 1.0f, 1.0f, 1.0f);
 
 	glBegin(GL_QUADS);
 
@@ -146,7 +160,30 @@ void DrawGLScene()
 
 	glEnd();
 
-	s_RotAngle += 0.5f;
+	pGLState->m_RotAngle += 0.5f;
+}
+
+static void KeyCallback(GLFWwindow* Window, int Key, int ScanCode, int Action, int Mods)
+{
+	SGLState* pGLState = static_cast<SGLState*>(glfwGetWindowUserPointer(Window));
+
+	switch (Action)
+	{
+	case GLFW_PRESS:
+	case GLFW_REPEAT:
+		switch(Key)
+		{
+		case GLFW_KEY_ESCAPE:
+			glfwSetWindowShouldClose(Window, GLFW_TRUE);
+		break;
+		}
+	break;
+
+	case GLFW_RELEASE:
+
+	break;
+
+	}
 }
 
 int main()
@@ -163,14 +200,16 @@ int main()
 		return -1;
 	}
 
+	SGLState GLState;
+	glfwSetWindowUserPointer(Window, &GLState);
+
+	glfwSetKeyCallback(Window, KeyCallback);
+
 	// Make the window's context current
 	glfwMakeContextCurrent(Window);
 
 	glfwSwapInterval(1);
 	InitGL();
-
-	// Cube initialization
-	Cube::Reset();
 
 	// Loop until the user closes the window
 	while (!glfwWindowShouldClose(Window))
@@ -180,7 +219,7 @@ int main()
 		ReSizeGLScene(Width, Height);
 
 		// Render here
-		DrawGLScene();
+		DrawGLScene(Window);
 
 		// Swap front and back buffers
 		glfwSwapBuffers(Window);

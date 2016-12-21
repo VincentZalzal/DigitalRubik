@@ -1,5 +1,6 @@
 #define GLFW_INCLUDE_GLU
 #include <GLFW/glfw3.h>
+#include "../Cube/cube.h"
 
 // Resize And Initialize The GL Window
 GLvoid ReSizeGLScene(int width, int height)
@@ -30,10 +31,10 @@ void InitGL()
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really Nice Perspective Calculations
 }
 
-void DrawFace(GLfloat cx, GLfloat cy, GLfloat cz, // color
-	      GLfloat px, GLfloat py, GLfloat pz, // first corner
+void DrawFace(GLfloat px, GLfloat py, GLfloat pz, // first corner
 	      GLfloat ux, GLfloat uy, GLfloat uz, // first  vector for 1 facelet
-	      GLfloat vx, GLfloat vy, GLfloat vz) // secont vector for 1 facelet
+	      GLfloat vx, GLfloat vy, GLfloat vz, // second vector for 1 facelet
+	      const uint8_t* FaceletIndices)
 {
 	const GLfloat Size   = 0.8f;   // percentage of vector that really applies to the facelet
 	const GLfloat Delta  = 0.999f; // percentage to reduce inner black cube
@@ -52,7 +53,7 @@ void DrawFace(GLfloat cx, GLfloat cy, GLfloat cz, // color
 	glVertex3f(Delta*qx, Delta*qy, Delta*qz);
 
 	// Draw the 9 facelets
-	glColor3f(cx, cy, cz);
+	const Facelet::Type* Facelets = Cube::GetFacelets();
 	for (int i = 0; i < 3; ++i)
 	{
 		// Offset is used to skip the black outline only once.
@@ -63,6 +64,12 @@ void DrawFace(GLfloat cx, GLfloat cy, GLfloat cz, // color
 
 		for (int j = 0; j < 3; ++j)
 		{
+			// Get Color.
+			uint8_t FaceletIndex = FaceletIndices[i * 3 + j];
+			Facelet::Type FaceletState = Facelets[FaceletIndex];
+			SColor Color = Colors[FaceletState];
+			glColor3ub(Color.r, Color.g, Color.b);
+
 			// Offset is used to skip the black outline only once.
 			GLfloat tt = j + Offset;
 			GLfloat tx = sx + tt * ux;
@@ -92,43 +99,50 @@ void DrawGLScene()
 	glTranslatef(0.0f, 0.0f, -21.0f);			// Translate Into The Screen 7.0 Units
 	glRotatef(s_RotAngle, 0.0f, 1.0f, 0.0f);		// Rotate The cube around the Y axis
 	glRotatef(s_RotAngle, 1.0f, 1.0f, 1.0f);
+
 	glBegin(GL_QUADS);
 
-		// Top: white
-		DrawFace( 1.0f,  1.0f,  1.0f,
-			 -3.0f,  3.0f, -3.0f,
+		// Top
+		const uint8_t TopFacelets[9] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+		DrawFace(-3.0f,  3.0f, -3.0f,
 			  0.0f,  0.0f,  2.0f,
-			  2.0f,  0.0f,  0.0f);
+			  2.0f,  0.0f,  0.0f,
+			  TopFacelets);
 
-		// Front: red
-		DrawFace( 1.0f,  0.0f,  0.0f,
-			 -3.0f,  3.0f,  3.0f,
+		// Front
+		const uint8_t FrontFacelets[9] = {9, 10, 11, 12, 13, 14, 15, 16, 17};
+		DrawFace(-3.0f,  3.0f,  3.0f,
 			  0.0f, -2.0f,  0.0f,
-			  2.0f,  0.0f,  0.0f);
+			  2.0f,  0.0f,  0.0f,
+			  FrontFacelets);
 
-		// Right: blue
-		DrawFace( 0.0f,  0.0f,  1.0f,
-			  3.0f,  3.0f,  3.0f,
+		// Right
+		const uint8_t RightFacelets[9] = {18, 19, 20, 21, 22, 23, 24, 25, 26};
+		DrawFace( 3.0f,  3.0f,  3.0f,
 			  0.0f, -2.0f,  0.0f,
-			  0.0f,  0.0f, -2.0f);
-
-		// Back: orange
-		DrawFace( 1.0f,  0.5f,  0.0f,
-			  3.0f,  3.0f, -3.0f,
-			  0.0f, -2.0f,  0.0f,
-			 -2.0f,  0.0f,  0.0f);
-
-		// Left: green
-		DrawFace( 0.0f,  1.0f,  0.0f,
-			 -3.0f,  3.0f, -3.0f,
-			  0.0f, -2.0f,  0.0f,
-			  0.0f,  0.0f,  2.0f);
-
-		// Bottom: yellow
-		DrawFace( 1.0f,  1.0f,  0.0f,
-			 -3.0f, -3.0f,  3.0f,
 			  0.0f,  0.0f, -2.0f,
-			  2.0f,  0.0f,  0.0f);
+			  RightFacelets);
+
+		// Back
+		const uint8_t BackFacelets[9] = {27, 28, 29, 30, 31, 32, 33, 34, 35};
+		DrawFace( 3.0f,  3.0f, -3.0f,
+			  0.0f, -2.0f,  0.0f,
+			 -2.0f,  0.0f,  0.0f,
+			  BackFacelets);
+
+		// Left
+		const uint8_t LeftFacelets[9] = {36, 37, 38, 39, 40, 41, 42, 43, 44};
+		DrawFace(-3.0f,  3.0f, -3.0f,
+			  0.0f, -2.0f,  0.0f,
+			  0.0f,  0.0f,  2.0f,
+			  LeftFacelets);
+
+		// Bottom
+		const uint8_t BottomFacelets[9] = {45, 46, 47, 48, 49, 50, 51, 52, 53};
+		DrawFace(-3.0f, -3.0f,  3.0f,
+			  0.0f,  0.0f, -2.0f,
+			  2.0f,  0.0f,  0.0f,
+			  BottomFacelets);
 
 	glEnd();
 
@@ -142,7 +156,7 @@ int main()
 		return -1;
 
 	// Create a windowed mode window and its OpenGL context
-	GLFWwindow* Window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+	GLFWwindow* Window = glfwCreateWindow(640, 480, "RubikView", NULL, NULL);
 	if (!Window)
 	{
 		glfwTerminate();
@@ -154,6 +168,9 @@ int main()
 
 	glfwSwapInterval(1);
 	InitGL();
+
+	// Cube initialization
+	Cube::Reset();
 
 	// Loop until the user closes the window
 	while (!glfwWindowShouldClose(Window))

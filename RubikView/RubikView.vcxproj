@@ -152,7 +152,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Cube\cube.cpp" />
     <ClCompile Include="RubikView.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Cube\cube.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

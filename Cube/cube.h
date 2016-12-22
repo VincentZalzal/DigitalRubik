@@ -31,13 +31,13 @@ struct SColor
 const SColor Colors[15] =
 {
 	{  0,   0,   0}, // Black 
-	{192, 192, 192}, // White 
-	{  0, 192,   0}, // Red   
-	{  0,   0, 192}, // Blue  
-	{ 96, 192,   0}, // Orange
-	{192,   0,   0}, // Green 
-	{192, 192,   0}, // Yellow
-	{  0, 192, 192}, // Unused (magenta)
+	{128, 128, 128}, // White 
+	{  0, 128,   0}, // Red   
+	{  0,   0, 128}, // Blue  
+	{ 64, 128,   0}, // Orange
+	{128,   0,   0}, // Green 
+	{128, 128,   0}, // Yellow
+	{  0, 128, 128}, // Unused (magenta)
 	{  0,   0,   0}, // Bright Black 
 	{255, 255, 255}, // Bright White 
 	{  0, 255,   0}, // Bright Red   
@@ -51,4 +51,9 @@ namespace Cube
 {
 const Facelet::Type* GetFacelets(); // Get pointer to 54 facelets, in LED order
 void Reset(); // Reset cube to solved state.
+void Brighten(uint8_t Side);
+void RotateSide(uint8_t Side);
+void RotateFront(uint8_t Side);
+void Rotate(uint8_t Side);
+void DimAll();
 }

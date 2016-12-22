@@ -4,7 +4,11 @@
 
 struct SGLState
 {
-	GLfloat m_RotAngle;
+	static const uint8_t NO_OP = 255;
+
+	uint8_t m_CurOp;
+	uint8_t m_OpStep;
+	double  m_OpTime;
 
 	SGLState();
 };
@@ -13,7 +17,9 @@ SGLState::SGLState()
 {
 	// Cube initialization
 	Cube::Reset();
-	m_RotAngle = 0.0f;
+	m_CurOp  = NO_OP;
+	m_OpStep = 0;
+	m_OpTime = 0.0;
 }
 
 // Resize And Initialize The GL Window
@@ -175,6 +181,56 @@ static void HandleHeldKeys(GLFWwindow* Window)
 	//}
 }
 
+static void HandleOperations(GLFWwindow* Window)
+{
+	SGLState* pGLState = static_cast<SGLState*>(glfwGetWindowUserPointer(Window));
+
+	const int NumSteps = 5;
+	const double StepTimes[NumSteps] = {0.0, 0.5, 0.65, 0.8, 1.0};
+
+	if (pGLState->m_CurOp != SGLState::NO_OP)
+	{
+		double DeltaTime = glfwGetTime() - pGLState->m_OpTime;
+
+		if (pGLState->m_OpStep == 0)
+		{
+			Cube::Brighten(pGLState->m_CurOp);
+			++pGLState->m_OpStep;
+		}
+
+		if (pGLState->m_OpStep == 1 && DeltaTime >= StepTimes[1])
+		{
+			Cube::RotateSide(pGLState->m_CurOp);
+			Cube::RotateFront(pGLState->m_CurOp);
+			++pGLState->m_OpStep;
+		}
+
+		if (pGLState->m_OpStep == 2 && DeltaTime >= StepTimes[2])
+		{
+			Cube::RotateSide(pGLState->m_CurOp);
+			++pGLState->m_OpStep;
+		}
+
+		if (pGLState->m_OpStep == 3 && DeltaTime >= StepTimes[3])
+		{
+			Cube::RotateSide(pGLState->m_CurOp);
+			Cube::RotateFront(pGLState->m_CurOp);
+			++pGLState->m_OpStep;
+		}
+
+		if (pGLState->m_OpStep == 4 && DeltaTime >= StepTimes[4])
+		{
+			Cube::DimAll();
+			++pGLState->m_OpStep;
+		}
+
+		if (pGLState->m_OpStep == NumSteps)
+		{
+			pGLState->m_CurOp = SGLState::NO_OP;
+		}
+	}
+}
+
 static void KeyCallback(GLFWwindow* Window, int Key, int ScanCode, int Action, int Mods)
 {
 	if (Action == GLFW_PRESS)
@@ -185,6 +241,24 @@ static void KeyCallback(GLFWwindow* Window, int Key, int ScanCode, int Action, i
 		{
 		case GLFW_KEY_ESCAPE:
 			glfwSetWindowShouldClose(Window, GLFW_TRUE);
+			break;
+
+		case GLFW_KEY_A:
+			if (pGLState->m_CurOp == SGLState::NO_OP)
+			{
+				pGLState->m_OpStep = 0;
+				pGLState->m_OpTime = glfwGetTime();
+				pGLState->m_CurOp = 0;
+			}
+			break;
+
+		case GLFW_KEY_S:
+			if (pGLState->m_CurOp == SGLState::NO_OP)
+			{
+				pGLState->m_OpStep = 0;
+				pGLState->m_OpTime = glfwGetTime();
+				pGLState->m_CurOp = 1;
+			}
 			break;
 		}
 	}
@@ -232,7 +306,7 @@ int main()
 		glfwPollEvents();
 
 		HandleHeldKeys(Window);
-
+		HandleOperations(Window);
 	}
 
 	glfwTerminate();

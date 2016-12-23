@@ -15,6 +15,7 @@ struct SGLState
 	GLfloat m_Roll;
 
 	SGLState();
+	void StartOp(uint8_t NewOp);
 };
 
 SGLState::SGLState()
@@ -28,6 +29,16 @@ SGLState::SGLState()
 	m_Yaw   = -30.0f;
 	m_Pitch =  30.0f;
 	m_Roll  =   0.0f;
+}
+
+void SGLState::StartOp(uint8_t NewOp)
+{
+	if (m_CurOp == NO_OP)
+	{
+		m_OpStep = 0;
+		m_OpTime = glfwGetTime();
+		m_CurOp  = NewOp;
+	}
 }
 
 // Resize And Initialize The GL Window
@@ -263,27 +274,13 @@ static void KeyCallback(GLFWwindow* Window, int Key, int ScanCode, int Action, i
 
 		switch (Key)
 		{
-		case GLFW_KEY_ESCAPE:
-			glfwSetWindowShouldClose(Window, GLFW_TRUE);
-			break;
-
-		case GLFW_KEY_1:
-			if (pGLState->m_CurOp == SGLState::NO_OP)
-			{
-				pGLState->m_OpStep = 0;
-				pGLState->m_OpTime = glfwGetTime();
-				pGLState->m_CurOp = 0;
-			}
-			break;
-
-		case GLFW_KEY_2:
-			if (pGLState->m_CurOp == SGLState::NO_OP)
-			{
-				pGLState->m_OpStep = 0;
-				pGLState->m_OpTime = glfwGetTime();
-				pGLState->m_CurOp = 1;
-			}
-			break;
+		case GLFW_KEY_ESCAPE: glfwSetWindowShouldClose(Window, GLFW_TRUE); break;
+		case GLFW_KEY_1: pGLState->StartOp(0); break;
+		case GLFW_KEY_2: pGLState->StartOp(1); break;
+		case GLFW_KEY_3: pGLState->StartOp(2); break;
+		case GLFW_KEY_4: pGLState->StartOp(3); break;
+		case GLFW_KEY_5: pGLState->StartOp(4); break;
+		case GLFW_KEY_6: pGLState->StartOp(5); break;
 		}
 	}
 }

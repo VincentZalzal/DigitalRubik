@@ -28,9 +28,8 @@ const SRotation Rot[6] =
 	{{35, 32, 29, 26, 23, 20, 17, 14, 11, 44, 41, 38}, {47, 50, 53, 52, 51, 48, 45, 46}, 49}	// bottom
 };
 
-static void RotateImpl(const FaceletIndex* Indices, uint8_t NumFacelets)
+static void RotateCW(const FaceletIndex* Indices, uint8_t NumFacelets)
 {
-
 	Facelet::Type Temp = g_Facelets[Indices[0]];
 	for (uint8_t i = 0; i < NumFacelets-1; ++i)
 	{
@@ -38,6 +37,17 @@ static void RotateImpl(const FaceletIndex* Indices, uint8_t NumFacelets)
 	}
 	g_Facelets[Indices[NumFacelets - 1]] = Temp;
 }
+
+static void RotateCCW(const FaceletIndex* Indices, uint8_t NumFacelets)
+{
+	Facelet::Type Temp = g_Facelets[Indices[NumFacelets - 1]];
+	for (uint8_t i = NumFacelets - 1; i > 0; --i)
+	{
+		g_Facelets[Indices[i]] = g_Facelets[Indices[i - 1]];
+	}
+	g_Facelets[Indices[0]] = Temp;
+}
+
 }
 
 namespace Cube
@@ -59,6 +69,9 @@ void Reset()
 
 void Brighten(Rotation::Type Face)
 {
+	if (Face >= Rotation::CCW)
+		Face -= Rotation::CCW;
+
 	const FaceletIndex* Indices = &Rot[Face].Side[0];
 	for (uint8_t i = 0; i < NumAffectedFacelets; ++i)
 		g_Facelets[Indices[i]] |= Facelet::Bright;
@@ -66,14 +79,32 @@ void Brighten(Rotation::Type Face)
 
 void RotateSide(Rotation::Type Face)
 {
-	const FaceletIndex* Indices = &Rot[Face].Side[0];
-	RotateImpl(Indices, NumSideFacelets);
+	if (Face >= Rotation::CCW)
+	{
+		Face -= Rotation::CCW;
+		const FaceletIndex* Indices = &Rot[Face].Side[0];
+		RotateCCW(Indices, NumSideFacelets);
+	}
+	else
+	{
+		const FaceletIndex* Indices = &Rot[Face].Side[0];
+		RotateCW(Indices, NumSideFacelets);
+	}
 }
 
 void RotateFront(Rotation::Type Face)
 {
-	const FaceletIndex* Indices = &Rot[Face].Front[0];
-	RotateImpl(Indices, NumFrontFacelets);
+	if (Face >= Rotation::CCW)
+	{
+		Face -= Rotation::CCW;
+		const FaceletIndex* Indices = &Rot[Face].Front[0];
+		RotateCCW(Indices, NumFrontFacelets);
+	}
+	else
+	{
+		const FaceletIndex* Indices = &Rot[Face].Front[0];
+		RotateCW(Indices, NumFrontFacelets);
+	}
 }
 
 void Rotate(Rotation::Type Face)

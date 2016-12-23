@@ -271,16 +271,17 @@ static void KeyCallback(GLFWwindow* Window, int Key, int ScanCode, int Action, i
 	if (Action == GLFW_PRESS)
 	{
 		SGLState* pGLState = static_cast<SGLState*>(glfwGetWindowUserPointer(Window));
+		Rotation::Type Orientation = ((Mods & GLFW_MOD_SHIFT) ? Rotation::CCW : 0);
 
 		switch (Key)
 		{
 		case GLFW_KEY_ESCAPE: glfwSetWindowShouldClose(Window, GLFW_TRUE); break;
-		case GLFW_KEY_1: pGLState->StartOp(0); break;
-		case GLFW_KEY_2: pGLState->StartOp(1); break;
-		case GLFW_KEY_3: pGLState->StartOp(2); break;
-		case GLFW_KEY_4: pGLState->StartOp(3); break;
-		case GLFW_KEY_5: pGLState->StartOp(4); break;
-		case GLFW_KEY_6: pGLState->StartOp(5); break;
+		case GLFW_KEY_1: pGLState->StartOp(Orientation + Rotation::Top   ); break;
+		case GLFW_KEY_2: pGLState->StartOp(Orientation + Rotation::Front ); break;
+		case GLFW_KEY_3: pGLState->StartOp(Orientation + Rotation::Right ); break;
+		case GLFW_KEY_4: pGLState->StartOp(Orientation + Rotation::Back  ); break;
+		case GLFW_KEY_5: pGLState->StartOp(Orientation + Rotation::Left  ); break;
+		case GLFW_KEY_6: pGLState->StartOp(Orientation + Rotation::Bottom); break;
 		}
 	}
 }

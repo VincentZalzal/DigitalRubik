@@ -10,6 +10,10 @@ struct SGLState
 	uint8_t m_OpStep;
 	double  m_OpTime;
 
+	GLfloat m_Yaw;
+	GLfloat m_Pitch;
+	GLfloat m_Roll;
+
 	SGLState();
 };
 
@@ -20,6 +24,10 @@ SGLState::SGLState()
 	m_CurOp  = NO_OP;
 	m_OpStep = 0;
 	m_OpTime = 0.0;
+
+	m_Yaw   = -30.0f;
+	m_Pitch =  30.0f;
+	m_Roll  =   0.0f;
 }
 
 // Resize And Initialize The GL Window
@@ -117,10 +125,9 @@ void DrawGLScene(GLFWwindow* Window)
 	glLoadIdentity();					// Reset The Current Modelview Matrix
 
 	glTranslatef(0.0f, 0.0f, -21.0f);			// Translate Into The Screen 7.0 Units
-	//glRotatef(pGLState->m_RotAngle, 0.0f, 1.0f, 0.0f);		// Rotate The cube around the Y axis
-	//glRotatef(pGLState->m_RotAngle, 1.0f, 1.0f, 1.0f);
-	glRotatef(-30.0f, 0.0f, 1.0f, 0.0f);
-	glRotatef( 30.0f, 1.0f, 0.0f, 0.0f);
+	glRotatef(pGLState->m_Yaw  , 0.0f, 1.0f, 0.0f);
+	glRotatef(pGLState->m_Pitch, 1.0f, 0.0f, 0.0f);
+	glRotatef(pGLState->m_Roll , 0.0f, 0.0f, 1.0f);
 
 	glBegin(GL_QUADS);
 
@@ -167,18 +174,35 @@ void DrawGLScene(GLFWwindow* Window)
 			  BottomFacelets);
 
 	glEnd();
-
-	//pGLState->m_RotAngle += 0.5f;
 }
 
 static void HandleHeldKeys(GLFWwindow* Window)
 {
 	SGLState* pGLState = static_cast<SGLState*>(glfwGetWindowUserPointer(Window));
 
-	//if (glfwGetKey(Window, GLFW_KEY_LEFT) == GLFW_PRESS)
-	//{
-	//	pGLState->m_RotAngle += 0.8f;
-	//}
+	const GLfloat ANGLE_INCREMENT = 1.0f; // in degrees
+
+	if ( glfwGetKey(Window, GLFW_KEY_LEFT) == GLFW_PRESS ||
+	     glfwGetKey(Window, GLFW_KEY_A   ) == GLFW_PRESS )
+		pGLState->m_Yaw -= ANGLE_INCREMENT;
+
+	if ( glfwGetKey(Window, GLFW_KEY_RIGHT) == GLFW_PRESS ||
+	     glfwGetKey(Window, GLFW_KEY_D    ) == GLFW_PRESS )
+		pGLState->m_Yaw += ANGLE_INCREMENT;
+
+	if ( glfwGetKey(Window, GLFW_KEY_UP) == GLFW_PRESS ||
+	     glfwGetKey(Window, GLFW_KEY_W ) == GLFW_PRESS )
+		pGLState->m_Pitch -= ANGLE_INCREMENT;
+
+	if ( glfwGetKey(Window, GLFW_KEY_DOWN) == GLFW_PRESS ||
+	     glfwGetKey(Window, GLFW_KEY_S   ) == GLFW_PRESS )
+		pGLState->m_Pitch += ANGLE_INCREMENT;
+
+	if (glfwGetKey(Window, GLFW_KEY_Q) == GLFW_PRESS)
+		pGLState->m_Roll -= ANGLE_INCREMENT;
+
+	if (glfwGetKey(Window, GLFW_KEY_E) == GLFW_PRESS)
+		pGLState->m_Roll += ANGLE_INCREMENT;
 }
 
 static void HandleOperations(GLFWwindow* Window)
@@ -243,7 +267,7 @@ static void KeyCallback(GLFWwindow* Window, int Key, int ScanCode, int Action, i
 			glfwSetWindowShouldClose(Window, GLFW_TRUE);
 			break;
 
-		case GLFW_KEY_A:
+		case GLFW_KEY_1:
 			if (pGLState->m_CurOp == SGLState::NO_OP)
 			{
 				pGLState->m_OpStep = 0;
@@ -252,7 +276,7 @@ static void KeyCallback(GLFWwindow* Window, int Key, int ScanCode, int Action, i
 			}
 			break;
 
-		case GLFW_KEY_S:
+		case GLFW_KEY_2:
 			if (pGLState->m_CurOp == SGLState::NO_OP)
 			{
 				pGLState->m_OpStep = 0;

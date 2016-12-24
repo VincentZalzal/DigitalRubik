@@ -2,6 +2,7 @@
 
 #include <cstdint>
 
+// "enum" representing the state of a facelet via its color.
 namespace Facelet
 {
 typedef uint8_t Type;
@@ -21,14 +22,16 @@ const Type Unused = 7;
 const Type Bright = 8;	// additive bit
 }
 
+// Structure holding a 24-bit color in the GRB order, as used by the LEDs.
 struct SColor
 {
-	uint8_t g, r, b; // LED protocol order
+	uint8_t g, r, b;
 };
 
-// Color LUT: index must be a Facelet::Type.
+// Color LUT:  Facelet::Type --> SColor
 extern const SColor Colors[15];
 
+// "enum" representing the possible rotation operations on the cube.
 namespace Rotation
 {
 typedef uint8_t Type;
@@ -43,17 +46,18 @@ const Type Bottom = 5;
 const Type CCW    = 6; // additive, means counter-clockwise
 }
 
+// "class" for manipulating the cube state.
 namespace Cube
 {
 const uint8_t NumFaceletsPerFace = 9;
 const uint8_t NumFaces = 6;
 const uint8_t NumFacelets = NumFaceletsPerFace * NumFaces;
 
-const Facelet::Type* GetFacelets();	// Get pointer to 54 facelets, in LED order
+const Facelet::Type* GetFacelets();	// Get pointer to 54 facelets, in LED order.
 void Reset();				// Reset cube to solved state.
-void Brighten(Rotation::Type Face);
-void RotateSide(Rotation::Type Face);
-void RotateFront(Rotation::Type Face);
-void Rotate(Rotation::Type Face);
-void DimAll();
+void Brighten(Rotation::Type Face);	// Brighten facelets according to a given rotation.
+void RotateSide(Rotation::Type Face);	// Move facelets on the side of a face, one step, according to a given rotation.
+void RotateFront(Rotation::Type Face);	// Move facelets on the front of a face, one step, according to a given rotation.
+void Rotate(Rotation::Type Face);	// Move all facelets of a face, all steps, according to a given rotation.
+void DimAll();				// Dim all facelets of the cube.
 }

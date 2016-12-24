@@ -1,5 +1,11 @@
 #include "cube.h"
 
+#ifndef PROGMEM
+	// This code is needed for non-AVR platforms.
+	#define PROGMEM
+	#define pgm_read_byte(Addr)	(*(Addr))
+#endif
+
 namespace 
 {
 Facelet::Type g_Facelets[Cube::NumFacelets]; // Global cube state.
@@ -18,7 +24,8 @@ struct SRotation // contains NumAffectedFacelets facelets.
 };
 
 // These are in the same order as namespace Rotation.
-const SRotation Rot[6] =
+// This is stored in flash memory and must be accessed using pgm_read_byte().
+const SRotation Rot[Cube::NumFaces] PROGMEM =
 {
 	{{9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42}, {2, 5, 8, 7, 6, 3, 0, 1}, 4},			// top
 	{{47, 46, 45, 20, 19, 18, 8, 5, 2, 42, 43, 44}, {11, 14, 17, 16, 15, 12, 9, 10}, 13},		// front
@@ -28,24 +35,37 @@ const SRotation Rot[6] =
 	{{35, 32, 29, 26, 23, 20, 17, 14, 11, 44, 41, 38}, {47, 50, 53, 52, 51, 48, 45, 46}, 49}	// bottom
 };
 
-static void RotateCW(const FaceletIndex* Indices, uint8_t NumFacelets)
+void RotateCW(const FaceletIndex* Indices, uint8_t NumFacelets)
 {
-	Facelet::Type Temp = g_Facelets[Indices[0]];
-	for (uint8_t i = 0; i < NumFacelets-1; ++i)
+	FaceletIndex CurIndex = pgm_read_byte(Indices++);
+	Facelet::Type Temp = g_Facelets[CurIndex];
+	
+	uint8_t Count = NumFacelets - 1;
+	do
 	{
-		g_Facelets[Indices[i]] = g_Facelets[Indices[i + 1]];
-	}
-	g_Facelets[Indices[NumFacelets - 1]] = Temp;
+		FaceletIndex NextIndex = pgm_read_byte(Indices++);
+		g_Facelets[CurIndex] = g_Facelets[NextIndex];
+		CurIndex = NextIndex;
+	} while (--Count);
+
+	g_Facelets[CurIndex] = Temp;
 }
 
-static void RotateCCW(const FaceletIndex* Indices, uint8_t NumFacelets)
+void RotateCCW(const FaceletIndex* Indices, uint8_t NumFacelets)
 {
-	Facelet::Type Temp = g_Facelets[Indices[NumFacelets - 1]];
-	for (uint8_t i = NumFacelets - 1; i > 0; --i)
+	Indices += NumFacelets;
+	FaceletIndex CurIndex = pgm_read_byte(--Indices);
+	Facelet::Type Temp = g_Facelets[CurIndex];
+
+	uint8_t Count = NumFacelets - 1;
+	do
 	{
-		g_Facelets[Indices[i]] = g_Facelets[Indices[i - 1]];
-	}
-	g_Facelets[Indices[0]] = Temp;
+		FaceletIndex NextIndex = pgm_read_byte(--Indices);
+		g_Facelets[CurIndex] = g_Facelets[NextIndex];
+		CurIndex = NextIndex;
+	} while (--Count);
+
+	g_Facelets[CurIndex] = Temp;
 }
 
 }
@@ -74,7 +94,10 @@ void Brighten(Rotation::Type Face)
 
 	const FaceletIndex* Indices = &Rot[Face].Side[0];
 	for (uint8_t i = 0; i < NumAffectedFacelets; ++i)
-		g_Facelets[Indices[i]] |= Facelet::Bright;
+	{
+		FaceletIndex Index = pgm_read_byte(Indices++);
+		g_Facelets[Index] |= Facelet::Bright;
+	}
 }
 
 void RotateSide(Rotation::Type Face)

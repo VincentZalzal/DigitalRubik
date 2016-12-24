@@ -26,5 +26,8 @@
     <ClInclude Include="..\Cube\cube.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Cube\config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,10 +1,7 @@
 #include "cube.h"
+#include "config.h"
 
-#ifndef PROGMEM
-	// This code is needed for non-AVR platforms.
-	#define PROGMEM
-	#define pgm_read_byte(Addr)	(*(Addr))
-#endif
+STATIC_ASSERT(Facelet::Bright == 8, "This constant must be bitwise-exclusive with the others.");
 
 // Color LUT: index must be a Facelet::Type.
 // It must be in SRAM for fast access during LED update.
@@ -59,6 +56,9 @@ const SRotation Rot[Cube::NumFaces] PROGMEM =
 
 void RotateCW(const FaceletIndex* Indices, uint8_t NumFacelets)
 {
+	assert(Indices != 0);
+	assert(NumFacelets == NumSideFacelets || NumFacelets == NumFrontFacelets);
+
 	FaceletIndex CurIndex = pgm_read_byte(Indices++);
 	Facelet::Type Temp = g_Facelets[CurIndex];
 	
@@ -75,6 +75,9 @@ void RotateCW(const FaceletIndex* Indices, uint8_t NumFacelets)
 
 void RotateCCW(const FaceletIndex* Indices, uint8_t NumFacelets)
 {
+	assert(Indices != 0);
+	assert(NumFacelets == NumSideFacelets || NumFacelets == NumFrontFacelets);
+
 	Indices += NumFacelets;
 	FaceletIndex CurIndex = pgm_read_byte(--Indices);
 	Facelet::Type Temp = g_Facelets[CurIndex];
@@ -111,6 +114,10 @@ void Reset()
 
 void Brighten(Rotation::Type Face)
 {
+	STATIC_ASSERT(sizeof(SRotation) == NumAffectedFacelets * sizeof(FaceletIndex),
+		      "SRotation is expected to contain NumAffectedFacelets contiguous indices.");
+	assert(Face < 2 * Rotation::CCW);
+
 	if (Face >= Rotation::CCW)
 		Face -= Rotation::CCW;
 
@@ -124,6 +131,8 @@ void Brighten(Rotation::Type Face)
 
 void RotateSide(Rotation::Type Face)
 {
+	assert(Face < 2 * Rotation::CCW);
+
 	if (Face >= Rotation::CCW)
 	{
 		Face -= Rotation::CCW;
@@ -139,6 +148,8 @@ void RotateSide(Rotation::Type Face)
 
 void RotateFront(Rotation::Type Face)
 {
+	assert(Face < 2 * Rotation::CCW);
+
 	if (Face >= Rotation::CCW)
 	{
 		Face -= Rotation::CCW;
@@ -154,6 +165,7 @@ void RotateFront(Rotation::Type Face)
 
 void Rotate(Rotation::Type Face)
 {
+	assert(Face < 2 * Rotation::CCW);
 	RotateSide(Face);
 	RotateSide(Face);
 	RotateSide(Face);

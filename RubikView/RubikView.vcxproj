@@ -156,6 +156,7 @@
     <ClCompile Include="RubikView.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Cube\config.h" />
     <ClInclude Include="..\Cube\cube.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -6,6 +6,28 @@
 	#define pgm_read_byte(Addr)	(*(Addr))
 #endif
 
+// Color LUT: index must be a Facelet::Type.
+// It must be in SRAM for fast access during LED update.
+// Warning: color order is GRB.
+const SColor Colors[15] =
+{
+	{  0,   0,   0}, // Black 
+	{128, 128, 128}, // White 
+	{  0, 128,   0}, // Red   
+	{  0,   0, 128}, // Blue  
+	{ 64, 128,   0}, // Orange
+	{128,   0,   0}, // Green 
+	{128, 128,   0}, // Yellow
+	{  0, 128, 128}, // Unused (magenta)
+	{  0,   0,   0}, // Bright Black 
+	{255, 255, 255}, // Bright White 
+	{  0, 255,   0}, // Bright Red   
+	{  0,   0, 255}, // Bright Blue  
+	{128, 255,   0}, // Bright Orange
+	{255,   0,   0}, // Bright Green 
+	{255, 255,   0}  // Bright Yellow
+};
+
 namespace 
 {
 Facelet::Type g_Facelets[Cube::NumFacelets]; // Global cube state.

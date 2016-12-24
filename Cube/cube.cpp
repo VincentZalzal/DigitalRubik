@@ -1,5 +1,6 @@
 #include "cube.h"
 #include "config.h"
+#include "rand8.h"
 
 STATIC_ASSERT(Facelet::Bright == 8, "This constant must be bitwise-exclusive with the others.");
 
@@ -117,6 +118,23 @@ void Reset()
 	for (Facelet::Type Color = Facelet::White; Color < Facelet::Unused; ++Color)
 		for (uint8_t i = 0; i < NumFaceletsPerFace; ++i)
 			*pFacelet++ = Color;
+}
+
+// Perform NumRotations random rotations on the cube.
+void Scramble(uint8_t NumRotations)
+{
+	if (NumRotations == 0)
+		return;
+	Rotation::Type PrevRot = Rand8::Get(0, Rotation::NumRotations - 1);
+	Rotate(PrevRot);
+	while (--NumRotations)
+	{
+		Rotation::Type CurRot = Rand8::Get(0, Rotation::NumRotations - 2);
+		if (CurRot >= Rotation::Opposite(PrevRot))
+			++CurRot;
+		Rotate(CurRot);
+		PrevRot = CurRot;
+	}
 }
 
 // Brighten facelets according to a given rotation.

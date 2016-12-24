@@ -44,6 +44,14 @@ const Type Back   = 3;
 const Type Left   = 4;
 const Type Bottom = 5;
 const Type CCW    = 6; // additive, means counter-clockwise
+
+const Type NumRotations = 12;
+
+inline Type Opposite(Type Face)
+{
+	return (Face < CCW ? Face + CCW : Face - CCW);
+}
+
 }
 
 // "class" for manipulating the cube state.
@@ -55,6 +63,7 @@ const uint8_t NumFacelets = NumFaceletsPerFace * NumFaces;
 
 const Facelet::Type* GetFacelets();	// Get pointer to 54 facelets, in LED order.
 void Reset();				// Reset cube to solved state.
+void Scramble(uint8_t NumRotations);	// Perform NumRotations random rotations on the cube.
 void Brighten(Rotation::Type Face);	// Brighten facelets according to a given rotation.
 void RotateSide(Rotation::Type Face);	// Move facelets on the side of a face, one step, according to a given rotation.
 void RotateFront(Rotation::Type Face);	// Move facelets on the front of a face, one step, according to a given rotation.

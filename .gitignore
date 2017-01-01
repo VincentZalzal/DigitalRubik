@@ -244,3 +244,4 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 /RubikView/glfw3.dll
+*.atsuo

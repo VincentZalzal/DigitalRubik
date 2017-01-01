@@ -5,6 +5,8 @@
 	// This is needed for non-AVR platforms.
 	#define PROGMEM
 	#define pgm_read_byte(Addr)	(*(Addr))
+#else
+	#include <avr/pgmspace.h>
 #endif
 
 // Asserts (disabled on AVR)

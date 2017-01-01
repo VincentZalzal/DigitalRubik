@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint>
+#include <stdint.h>
 
 // "enum" representing the state of a facelet via its color.
 namespace Facelet

@@ -13,11 +13,13 @@
 
 #include "../Cube/cube.h"
 
-#define LED_STRIP_DELAY_MS	80
+#define LED_STRIP_DELAY_US	80	// specs says >50, Pololu uses 80
 #define LED_STRIP_PORT		PORTD
 #define LED_STRIP_DDR		DDRD
 #define LED_STRIP_PIN		0
 
+// Sends the current color values to all LEDs using bitbanging.
+// Timing is VERY important in this function.
 void UpdateLEDs()
 {
 	const Facelet::Type* pFacelets = Cube::GetFacelets();
@@ -33,41 +35,38 @@ void UpdateLEDs()
 		{
 			uint8_t ColorComponent = *pColorComponents++;
 			uint8_t NumBits = 8;
-			do
-			{
-				uint8_t Carry = ColorComponent & 0x80;
-				ColorComponent <<= 1;
-				if (Carry)
-				{
-					__asm__ __volatile__( "\n"
-						"sbi %0, %1" "\n\t"
-						"nop" "\n\t"
-						"nop" "\n\t"
-						"nop" "\n\t"
-						"nop" "\n\t"
-						"nop" "\n\t"
-						"cbi %0, %1" "\n\t"
-						:
-						: "I" (_SFR_IO_ADDR(LED_STRIP_PORT)),	// %0 is the port register (e.g. PORTD)
-						  "I" (LED_STRIP_PIN)			// %1 is the pin number (0-8)
-					);
-				}
-				else
-				{
-					__asm__ __volatile__( "\n"
-						"sbi %0, %1" "\n\t"
-						"nop" "\n\t"
-						"cbi %0, %1" "\n\t"
-						"nop" "\n\t"
-						"nop" "\n\t"
-						"nop" "\n\t"
-						"nop" "\n\t"
-						:
-						: "I" (_SFR_IO_ADDR(LED_STRIP_PORT)),	// %0 is the port register (e.g. PORTD)
-						  "I" (LED_STRIP_PIN)			// %1 is the pin number (0-8)
-					);
-				}
-			} while (--NumBits);
+			
+			// Number of cycles for each instruction is written in the comment.
+			// The positive pulse duration must be 3 cycles for transmitting
+			// a 0 and 7 cycles for transmitting a 1. The total time for
+			// bit must be at least 10 cycles. The implementation below
+			// takes 10 cycles for transmitting a 0 and 12 cycles for a 1.
+			__asm__ __volatile__(	// volatile prohibits optimizations
+			"NEXT_BIT:" "\n\t"
+				"rol %[ColorComponent]" "\n\t"	// 1
+				"sbi %[IOreg], %[Pin]" "\n\t"	// 2
+				"brcs TX_1" "\n\t"		// 2 if taken, 1 otherwise
+
+			"TX_0:" "\n\t"
+				"cbi %[IOreg], %[Pin]" "\n\t"	// 2
+				"nop" "\n\t"			// 1
+				"dec %[NumBits]" "\n\t"		// 1
+				"brne NEXT_BIT" "\n\t"		// 2 if taken, 1 otherwise
+				"rjmp END_OF_BYTE" "\n\t"	// 2 (only happens between bytes)
+
+			"TX_1:" "\n\t"
+				"nop" "\n\t"			// 1
+				"nop" "\n\t"			// 1
+				"dec %[NumBits]" "\n\t"		// 1
+				"cbi %[IOreg], %[Pin]" "\n\t"	// 2
+				"brne NEXT_BIT" "\n\t"		// 2 if taken, 1 otherwise
+
+			"END_OF_BYTE:" "\n\t"
+			: [ColorComponent] "+r" (ColorComponent),		// in-out register
+			  [NumBits]        "+r" (NumBits)			// in-out register
+			: [IOreg]          "I"  (_SFR_IO_ADDR(LED_STRIP_PORT)),	// input immediate in 0-63
+			  [Pin]            "I"  (LED_STRIP_PIN)			// input immediate in 0-63
+			);
 		} while (--NumComponents);
 		
 	} while (--NumFacelets);
@@ -82,24 +81,24 @@ int main(void)
 	// Send LED reset signal.
 	LED_STRIP_DDR  |= 0x01;
 	LED_STRIP_PORT &= ~_BV(LED_STRIP_PIN);
-	_delay_ms(LED_STRIP_DELAY_MS);
+	_delay_us(LED_STRIP_DELAY_US);
 
 	Cube::Reset();
 	
 	// Temporary ugly code to test LEDs.
-	//Facelet::Type* pFacelets = (Facelet::Type*)Cube::GetFacelets();
-	//int ii = 0;
+	Facelet::Type* pFacelets = (Facelet::Type*)Cube::GetFacelets();
+	int ii = 0;
 
 	while(1)
 	{
 		// Temporary ugly code to test LEDs.
-		//pFacelets[0] = ii;
-		//pFacelets[1] = ii + 1;
-		//pFacelets[2] = ii + 2;
-		//if (ii == 12)
-		//	ii = 0;
-		//else
-		//	++ii;
+		pFacelets[0] = ii;
+		pFacelets[1] = ii + 1;
+		pFacelets[2] = ii + 2;
+		if (ii == 12)
+			ii = 0;
+		else
+			++ii;
 	
 		UpdateLEDs();
 

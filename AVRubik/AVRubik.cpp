@@ -23,17 +23,12 @@
 void UpdateLEDs()
 {
 	const Facelet::Type* pFacelets = Cube::GetFacelets();
-	
-	uint8_t NumFacelets = Cube::NumFacelets;
-	do
+	for (uint8_t FaceletIdx = 0; FaceletIdx < Cube::NumFacelets; ++FaceletIdx)
 	{
-		Facelet::Type CurFacelet = *pFacelets++;
-		const uint8_t* pColorComponents = &Colors[CurFacelet].r;
-		
-		uint8_t NumComponents = 3;
-		do 
+		const uint8_t* pColorComponents = &Colors[pFacelets[FaceletIdx]].r;
+		for (uint8_t ColorIdx = 0; ColorIdx < 3; ++ColorIdx)
 		{
-			uint8_t ColorComponent = *pColorComponents++;
+			uint8_t ColorComponent = pColorComponents[ColorIdx];
 			uint8_t NumBits = 8;
 			
 			// Number of cycles for each instruction is written in the comment.
@@ -67,9 +62,8 @@ void UpdateLEDs()
 			: [IOreg]          "I"  (_SFR_IO_ADDR(LED_STRIP_PORT)),	// input immediate in 0-63
 			  [Pin]            "I"  (LED_STRIP_PIN)			// input immediate in 0-63
 			);
-		} while (--NumComponents);
-		
-	} while (--NumFacelets);
+		}
+	}
 }
 
 int main(void)
@@ -86,19 +80,19 @@ int main(void)
 	Cube::Reset();
 	
 	// Temporary ugly code to test LEDs.
-	Facelet::Type* pFacelets = (Facelet::Type*)Cube::GetFacelets();
-	int ii = 0;
+	//Facelet::Type* pFacelets = (Facelet::Type*)Cube::GetFacelets();
+	//int ii = 0;
 
 	while(1)
 	{
 		// Temporary ugly code to test LEDs.
-		pFacelets[0] = ii;
-		pFacelets[1] = ii + 1;
-		pFacelets[2] = ii + 2;
-		if (ii == 12)
-			ii = 0;
-		else
-			++ii;
+		//pFacelets[0] = ii;
+		//pFacelets[1] = ii + 1;
+		//pFacelets[2] = ii + 2;
+		//if (ii == 12)
+		//	ii = 0;
+		//else
+		//	++ii;
 	
 		UpdateLEDs();
 

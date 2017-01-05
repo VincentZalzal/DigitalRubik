@@ -22,10 +22,10 @@ const Type Unused = 7;
 const Type Bright = 8;	// additive bit
 }
 
-// Structure holding a 24-bit color in the GRB order, as used by the LEDs.
+// Structure holding a 24-bit color in the RGB order, as used by the LEDs.
 struct SColor
 {
-	uint8_t g, r, b;
+	uint8_t r, g, b;
 };
 
 // Color LUT:  Facelet::Type --> SColor

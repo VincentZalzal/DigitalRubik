@@ -6,19 +6,26 @@
  */
 
 #include "avr_specific.h"
+#include "rings.h"
 #include "leds.h"
 #include "../Cube/cube.h"
 
-int main(void)
+void Init()
 {
+	Rings::Init();
 	Leds::Init();
 	Cube::Reset();
-	Cube::Scramble(30);
+}
 
+int main(void)
+{
+	Init();
+
+	Cube::Scramble(30);
 	Leds::Update();
 
 	while(1)
 	{
-
+		Rings::Read();
 	}
 }

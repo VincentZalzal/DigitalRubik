@@ -2,6 +2,17 @@
 #include "avr_specific.h"
 #include "../Cube/cube.h"
 
+namespace
+{
+
+// Wait for reset signal (80 us).
+inline void WaitForReset()
+{
+	_delay_us(80); // specs says >50, Pololu uses 80
+}
+
+}
+
 namespace Leds
 {
 
@@ -13,9 +24,7 @@ void Init()
 	WaitForReset();
 }
 
-// Update all LEDs according to the cube state; do NOT wait for reset.
-// There must be a delay of at least 80 us between two calls to this function.
-// If necessary, call WaitForReset() to ensure the proper delay.
+// Update all LEDs according to the cube state (about 5 ms).
 // Sends the current color values to all LEDs using bitbanging.
 // Timing is VERY important in this function.
 void Update()
@@ -62,12 +71,7 @@ void Update()
 			);
 		}
 	}
-}
-
-// Wait for reset signal (80 us).
-void WaitForReset()
-{
-	_delay_us(80); // specs says >50, Pololu uses 80
+	WaitForReset();
 }
 
 }

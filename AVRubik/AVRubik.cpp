@@ -14,9 +14,9 @@
 #include "../Cube/cube.h"
 
 #define LED_STRIP_DELAY_US	80	// specs says >50, Pololu uses 80
-#define LED_STRIP_PORT		PORTD
-#define LED_STRIP_DDR		DDRD
-#define LED_STRIP_PIN		0
+#define LED_STRIP_PORT		PORTA
+#define LED_STRIP_DDR		DDRA
+#define LED_STRIP_PIN		PORTA3
 
 // Sends the current color values to all LEDs using bitbanging.
 // Timing is VERY important in this function.
@@ -69,8 +69,8 @@ void UpdateLEDs()
 int main(void)
 {
 	// Set red LED port pin.
-	DDRC |= 0x20;
-	PORTC = 0;
+	//DDRC |= 0x20;
+	//PORTC = 0;
 
 	// Send LED reset signal.
 	LED_STRIP_DDR  |= 0x01;
@@ -97,7 +97,7 @@ int main(void)
 		UpdateLEDs();
 
 		// Toggle red LED to know we're still alive.
-		PINC |= 0x20;
-		_delay_ms(3000);
+		//PINC |= 0x20;
+		//_delay_ms(3000);
 	}
 }

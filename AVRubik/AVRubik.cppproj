@@ -142,6 +142,15 @@
       <SubType>compile</SubType>
       <Link>rand8.h</Link>
     </Compile>
+    <Compile Include="leds.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="leds.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="avr_specific.h">
+      <SubType>compile</SubType>
+    </Compile>
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
 </Project>

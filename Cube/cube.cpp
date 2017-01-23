@@ -120,6 +120,18 @@ void Reset()
 			*pFacelet++ = Color;
 }
 
+// Returns true if the cube is in the solved state.
+bool IsSolved()
+{
+	// Numerical order of colors in Facelet match initialization order.
+	const Facelet::Type* pFacelet = g_Facelets;
+	for (Facelet::Type Color = Facelet::White; Color < Facelet::Unused; ++Color)
+		for (uint8_t i = 0; i < NumFaceletsPerFace; ++i)
+			if (*pFacelet++ != Color)
+				return false;
+	return true;
+}
+
 // Perform NumRotations random rotations on the cube.
 void Scramble(uint8_t NumRotations)
 {
@@ -134,6 +146,17 @@ void Scramble(uint8_t NumRotations)
 			++CurRot;
 		Rotate(CurRot);
 		PrevRot = CurRot;
+	}
+}
+
+// Set brightness state randomly to all facelets.
+void BrightenRandom()
+{
+	DimAll();
+	for (uint8_t i = 0; i < 25; ++i)
+	{
+		FaceletIndex Index = Rand8::Get(0, NumFacelets-1);
+		g_Facelets[Index] |= Facelet::Bright;
 	}
 }
 

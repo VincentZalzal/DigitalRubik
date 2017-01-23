@@ -24,7 +24,7 @@ int main(void)
 	Cube::Scramble(NUM_SCRAMBLE_ROTATIONS);
 	Leds::Update();
 
-	while(1) // TODO: !Cube::IsSolved()
+	while (!Cube::IsSolved())
 	{
 		Rings::Read();
 		bool CubeHasChanged = true; // TODO: Controls::UpdateCube();
@@ -67,16 +67,10 @@ int main(void)
 		}
 	}
 	
-	while(1)
+	while (1)
 	{
 		// Perform victory animation forever.
-		// TODO: Cube::BrightenRandom();
-		//Cube::DimAll();
-		//for (uint8_t i = 0; i < 25; ++i)
-		//{
-		//	uint8_t CurFacelet = Rand8::Get(0, 53);
-		//	Cube::BrightenFacelet(CurFacelet);
-		//}
+		Cube::BrightenRandom();
 		Leds::Update();
 		_delay_ms(VICTORY_ANIMATION_DELAY_MS);
 	}

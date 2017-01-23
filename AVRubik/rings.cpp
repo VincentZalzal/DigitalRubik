@@ -14,7 +14,7 @@ namespace
 // Mémoire qui contient les 4 dernières valeurs lues pour chaque anneau
 uint8_t g_InputRaw[NB_RINGS / 2] = { 0 };
 // État des anneaux, 1 bit par anneau
-uint8_t g_Status[NB_RINGS / 8]   = { 0 };
+uint8_t g_Status[NB_RINGS / 8]   = { 0 }; // TODO: transform this into counters inside Controls
 
 // Décale 1 bit dans le registre à décalage. Les bits sont décalés
 // du moins significatif vers le plus significatif.
@@ -98,6 +98,7 @@ void Debounce( void )
 
 	for (uint8_t i = 0; i < NB_RINGS / 8; i++)
 	{
+		// TODO: transform this into counters inside Controls
 		g_Status[i] = 0;
 
 		for (uint8_t tmp = 0; tmp < 4; tmp++)
@@ -134,6 +135,8 @@ void Init( void )
 	ADCSRB = _BV(ADLAR);
 	// Réduire la consommation
 	DIDR0 = ~_BV(ADC0D);
+	
+	Reset();
 }
 
 // Lecture de tous les anneaux. Fonction devant être appelée de l'externe.
@@ -141,6 +144,13 @@ void Read( void )
 {
 	ReadRaw();
 	Debounce();
+}
+
+// Remet toutes les valeurs lues à 0.
+void Reset()
+{
+	for (uint8_t i = 0; i < NB_RINGS / 2; i++)
+		g_InputRaw[i] = 0;
 }
 
 }

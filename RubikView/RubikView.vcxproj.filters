@@ -24,6 +24,9 @@
     <ClCompile Include="..\Cube\rand8.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Cube\controls.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Cube\cube.h">
@@ -33,6 +36,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Cube\rand8.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Cube\controls.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

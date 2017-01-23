@@ -47,6 +47,8 @@ const Type CCW    = 6; // additive, means counter-clockwise
 
 const Type NumRotations = 12;
 
+const Type None   = 255;
+
 inline Type Opposite(Type Face)
 {
 	return (Face < CCW ? Face + CCW : Face - CCW);

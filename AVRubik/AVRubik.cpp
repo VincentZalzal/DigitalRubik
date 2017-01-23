@@ -3,6 +3,7 @@
 #include "leds.h"
 #include "../Cube/rand8.h"
 #include "../Cube/cube.h"
+#include "../Cube/controls.h"
 
 #define NUM_SCRAMBLE_ROTATIONS		30
 #define ROTATION_DELAY_MS		150
@@ -27,41 +28,32 @@ int main(void)
 	while (!Cube::IsSolved())
 	{
 		Rings::Read();
-		bool CubeHasChanged = true; // TODO: Controls::UpdateCube();
+		
+		bool CubeHasChanged;
+		Rotation::Type CurRotation;
+		Controls::UpdateCube(&CurRotation, &CubeHasChanged);
 		if (CubeHasChanged)
 			Leds::Update();
 		
-		// TODO: Controls::ActionType Action = DetermineAction();
-		uint8_t Action = Rotation::Top;
-		
-		// TODO
-		//if (Action == Undo)
-		//{
-		//	
-		//}
-		//else if (Action == Menu)
-		//{
-		//	
-		//}
-		//else
+		if (CurRotation != Rotation::None)
 		{
 			// Perform the rotation animation.
-			Cube::RotateSide(Action);
-			Cube::RotateFront(Action);
+			Cube::RotateSide(CurRotation);
+			Cube::RotateFront(CurRotation);
 			Leds::Update();
 			_delay_ms(ROTATION_DELAY_MS);
 			
-			Cube::RotateSide(Action);
+			Cube::RotateSide(CurRotation);
 			Leds::Update();
 			_delay_ms(ROTATION_DELAY_MS);
 
-			Cube::RotateSide(Action);
-			Cube::RotateFront(Action);
+			Cube::RotateSide(CurRotation);
+			Cube::RotateFront(CurRotation);
 			Leds::Update();
 			_delay_ms(ROTATION_DELAY_MS);
 			
-			// TODO: Rings::Reset();
-			// TODO: Controls::Reset();
+			Rings::Reset();
+			Controls::Reset();
 			Cube::DimAll();
 			Leds::Update();
 		}

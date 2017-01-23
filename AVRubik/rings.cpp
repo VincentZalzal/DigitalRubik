@@ -1,7 +1,7 @@
 #include "rings.h"
 #include "avr_specific.h"
 
-namespace Rings
+namespace
 {
 
 // Délai d'attente entre le changement du registre à décalage et la lecture (en ms)
@@ -15,24 +15,6 @@ namespace Rings
 uint8_t g_InputRaw[NB_RINGS / 2] = { 0 };
 // État des anneaux, 1 bit par anneau
 uint8_t g_Status[NB_RINGS / 8]   = { 0 };
-
-// Initialisation des ressources utilisées pour la détection des doigts.
-void Init( void )
-{
-	// Initialisation des IO utilisés par le registre à décalage (output clear)
-	SH_REG_DDR  |=  ( _BV( SH_REG_SER_IN ) | _BV( SH_REG_SRCK ) | _BV( SH_REG_RCK ) );
-	SH_REG_PORT &= ~( _BV( SH_REG_SER_IN ) | _BV( SH_REG_SRCK ) | _BV( SH_REG_RCK ) );
-
-	// Préparation du ADC
-	// Référence de Vcc utilisée par défaut
-	ADMUX = 0;
-	// (1 << ADEN) : active le ADC
-	ADCSRA = (1 << ADEN);
-	// (1 << ADLAR) : Ajusté à gauche
-	ADCSRB = (1 << ADLAR);
-	// Réduire la consommation
-	DIDR0 |= (1 << ADC1D);
-}
 
 // Décale 1 bit dans le registre à décalage. Les bits sont décalés
 // du moins significatif vers le plus significatif.
@@ -129,6 +111,29 @@ void Debounce( void )
 			++j;
 		}
 	}
+}
+
+}
+
+namespace Rings
+{
+
+// Initialisation des ressources utilisées pour la détection des doigts.
+void Init( void )
+{
+	// Initialisation des IO utilisés par le registre à décalage (output clear)
+	SH_REG_DDR  |=  ( _BV( SH_REG_SER_IN ) | _BV( SH_REG_SRCK ) | _BV( SH_REG_RCK ) );
+	SH_REG_PORT &= ~( _BV( SH_REG_SER_IN ) | _BV( SH_REG_SRCK ) | _BV( SH_REG_RCK ) );
+
+	// Préparation du ADC
+	// Référence de Vcc utilisée par défaut, prescaler /8
+	ADMUX = _BV(ADPS1) | _BV(ADPS0);
+	// (1 << ADEN) : active le ADC
+	ADCSRA = _BV(ADEN);
+	// (1 << ADLAR) : Ajusté à gauche
+	ADCSRB = _BV(ADLAR);
+	// Réduire la consommation
+	DIDR0 = ~_BV(ADC0D);
 }
 
 // Lecture de tous les anneaux. Fonction devant être appelée de l'externe.

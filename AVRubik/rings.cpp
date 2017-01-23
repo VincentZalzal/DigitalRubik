@@ -134,7 +134,7 @@ void Init( void )
 	// (1 << ADLAR) : Ajusté à gauche
 	ADCSRB = _BV(ADLAR);
 	// Réduire la consommation
-	DIDR0 = ~_BV(ADC0D);
+	DIDR0 = _BV(ADC0D);
 	
 	Reset();
 }

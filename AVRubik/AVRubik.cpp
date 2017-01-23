@@ -15,7 +15,12 @@ void Init()
 	Leds::Init();
 	Cube::Reset();
 	Rand8::Seed(42); // TODO: seed RNG using ADC
-	// TODO: disable unused components to reduce power consumption
+	
+	// Disable unused components to reduce power consumption.
+	// USI, Timer/Counter 0, TImer/Counter 1.
+	PRR = _BV(PRTIM1) | _BV(PRTIM0) | _BV(PRUSI);
+	// Analog Comparator
+	ACSR |= _BV(ACD);
 }
 
 int main(void)

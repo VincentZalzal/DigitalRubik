@@ -1,5 +1,6 @@
 #include "rings.h"
 #include "avr_specific.h"
+#include "../Cube/controls.h"
 
 namespace
 {
@@ -8,13 +9,9 @@ namespace
 #define SETTLE_DELAY 1
 // Seuil pour le registre à décalage
 #define THRESHOLD 32
-// Nombre d'anneaux à lire. Doit être un multiple de 8.
-#define NB_RINGS 24
 
 // Mémoire qui contient les 4 dernières valeurs lues pour chaque anneau
-uint8_t g_InputRaw[NB_RINGS / 2] = { 0 };
-// État des anneaux, 1 bit par anneau
-uint8_t g_Status[NB_RINGS / 8]   = { 0 }; // TODO: transform this into counters inside Controls
+uint8_t g_InputRaw[Controls::NumSensors / 2] = { 0 };
 
 // Décale 1 bit dans le registre à décalage. Les bits sont décalés
 // du moins significatif vers le plus significatif.
@@ -74,7 +71,7 @@ void ReadRaw( void )
 	// Sérialiser un 1
 	SH_REG_PORT |=  (1 << SH_REG_SER_IN);
 
-	for (uint8_t i = 0; i < NB_RINGS / 2; i++)
+	for (uint8_t i = 0; i < Controls::NumSensors / 2; i++)
 	{
 		// Décaler les bits pour conserver en mémoire les 3 derniers bits lus
 		g_InputRaw[i] <<= 1;
@@ -89,29 +86,39 @@ void ReadRaw( void )
 	Shift();
 }
 
+void UpdateCounter(int8_t* pSensorCounter, bool SensorIsOn)
+{
+	if (SensorIsOn)
+	{
+		if (*pSensorCounter <= 0)
+			*pSensorCounter = 1;
+		else if (*pSensorCounter < 127)
+			++(*pSensorCounter);
+	}
+	else
+	{
+		if (*pSensorCounter >= 0)
+			*pSensorCounter = -1;
+		else if (*pSensorCounter > -128)
+			--(*pSensorCounter);
+	}
+}
+
 // Fonction à double utilité:
 // 	- Applique un filtre anto-rebond sur les lectures des anneaux
 //	- Ordonne les bits dans la variable finale
 void Debounce( void )
 {
-	uint8_t j = 0;
+	const uint8_t* pInputRaw  = g_InputRaw;
+	const uint8_t* const pEnd = pInputRaw + Controls::NumSensors / 2;
 
-	for (uint8_t i = 0; i < NB_RINGS / 8; i++)
+	int8_t* pSensorCounter = Controls::g_SensorCounters;
+
+	do
 	{
-		// TODO: transform this into counters inside Controls
-		g_Status[i] = 0;
-
-		for (uint8_t tmp = 0; tmp < 4; tmp++)
-		{
-			g_Status[i] >>= 1;
-			if (( g_InputRaw[j] & 0x0F ) != 0) g_Status[i] |= _BV( 7 );
-
-			g_Status[i] >>= 1;
-			if (( g_InputRaw[j] & 0xF0 ) != 0) g_Status[i] |= _BV( 7 );
-
-			++j;
-		}
-	}
+		UpdateCounter(pSensorCounter++, (*pInputRaw & 0x0F) != 0);
+		UpdateCounter(pSensorCounter++, (*pInputRaw & 0xF0) != 0);
+	} while (++pInputRaw != pEnd);
 }
 
 }
@@ -149,7 +156,7 @@ void Read( void )
 // Remet toutes les valeurs lues à 0.
 void Reset()
 {
-	for (uint8_t i = 0; i < NB_RINGS / 2; i++)
+	for (uint8_t i = 0; i < Controls::NumSensors / 2; i++)
 		g_InputRaw[i] = 0;
 }
 

@@ -3,17 +3,37 @@
 // Unnamed namespace for internal details.
 namespace
 {
-
+int8_t g_SensorCounters[Controls::NumSensors];
 }
 
 namespace Controls
 {
-int8_t g_SensorCounters[Controls::NumSensors];
-	
+
 void Reset()
 {
 	for (uint8_t SensorIdx = 0; SensorIdx < NumSensors; ++SensorIdx)
 		g_SensorCounters[SensorIdx] = 0;
+}
+
+void UpdateCounter(uint8_t SensorIdx, bool SensorIsOn)
+{
+	uint8_t OldValue = g_SensorCounters[SensorIdx];
+	uint8_t NewValue = OldValue;
+	if (SensorIsOn)
+	{
+		if (OldValue <= 0)
+			NewValue = 1;
+		else if (OldValue < 127)
+			NewValue = OldValue + 1;
+	}
+	else
+	{
+		if (OldValue >= 0)
+			NewValue = -1;
+		else if (OldValue > -128)
+			NewValue = OldValue - 1;
+	}
+	g_SensorCounters[SensorIdx] = NewValue;
 }
 
 void UpdateCube(Rotation::Type* pCurRotation, bool* pCubeHasChanged)

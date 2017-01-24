@@ -86,39 +86,17 @@ void ReadRaw( void )
 	Shift();
 }
 
-void UpdateCounter(int8_t* pSensorCounter, bool SensorIsOn)
-{
-	if (SensorIsOn)
-	{
-		if (*pSensorCounter <= 0)
-			*pSensorCounter = 1;
-		else if (*pSensorCounter < 127)
-			++(*pSensorCounter);
-	}
-	else
-	{
-		if (*pSensorCounter >= 0)
-			*pSensorCounter = -1;
-		else if (*pSensorCounter > -128)
-			--(*pSensorCounter);
-	}
-}
-
 // Fonction à double utilité:
 // 	- Applique un filtre anto-rebond sur les lectures des anneaux
 //	- Ordonne les bits dans la variable finale
 void Debounce( void )
 {
-	const uint8_t* pInputRaw  = g_InputRaw;
-	const uint8_t* const pEnd = pInputRaw + Controls::NumSensors / 2;
-
-	int8_t* pSensorCounter = Controls::g_SensorCounters;
-
-	do
+	for (uint8_t InputIdx = 0, SensorIdx = 0; InputIdx < Controls::NumSensors / 2; ++InputIdx)
 	{
-		UpdateCounter(pSensorCounter++, (*pInputRaw & 0x0F) != 0);
-		UpdateCounter(pSensorCounter++, (*pInputRaw & 0xF0) != 0);
-	} while (++pInputRaw != pEnd);
+		uint8_t RawInput = g_InputRaw[InputIdx];
+		Controls::UpdateCounter(SensorIdx++, (RawInput & 0x0F) != 0);
+		Controls::UpdateCounter(SensorIdx++, (RawInput & 0xF0) != 0);
+	}
 }
 
 }

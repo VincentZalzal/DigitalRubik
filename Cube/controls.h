@@ -5,8 +5,8 @@
 namespace Controls
 {
 const uint8_t NumSensors = 24;
-extern int8_t g_SensorCounters[Controls::NumSensors];
 
 void Reset();
+void UpdateCounter(uint8_t SensorIdx, bool SensorIsOn);
 void UpdateCube(Rotation::Type* pCurRotation, bool* pCubeHasChanged);
 }

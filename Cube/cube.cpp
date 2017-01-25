@@ -48,7 +48,7 @@ struct SRotation
 
 // These are in the same order as namespace Rotation.
 // This is stored in flash memory and must be accessed using pgm_read_byte().
-const SRotation Rot[Cube::NumFaces] PROGMEM =
+const SRotation f_Rot[Cube::NumFaces] PROGMEM =
 {
 	{{ 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42}, { 2,  5,  8,  7,  6,  3,  0,  1},  4},	// top
 	{{47, 46, 45, 20, 19, 18,  8,  5,  2, 42, 43, 44}, {11, 14, 17, 16, 15, 12,  9, 10}, 13},	// front
@@ -113,6 +113,8 @@ const Facelet::Type* GetFacelets()
 // Reset cube to solved state.
 void Reset()
 {
+	STATIC_ASSERT(Facelet::Unused - Facelet::White == 6, "The color order is assumed below.");
+
 	// Numerical order of colors in Facelet match initialization order.
 	Facelet::Type* pFacelet = g_Facelets;
 	for (Facelet::Type Color = Facelet::White; Color < Facelet::Unused; ++Color)
@@ -123,6 +125,8 @@ void Reset()
 // Returns true if the cube is in the solved state.
 bool IsSolved()
 {
+	STATIC_ASSERT(Facelet::Unused - Facelet::White == 6, "The color order is assumed below.");
+
 	// Numerical order of colors in Facelet match initialization order.
 	const Facelet::Type* pFacelet = g_Facelets;
 	for (Facelet::Type Color = Facelet::White; Color < Facelet::Unused; ++Color)
@@ -135,6 +139,9 @@ bool IsSolved()
 // Perform NumRotations random rotations on the cube.
 void Scramble(uint8_t NumRotations)
 {
+	STATIC_ASSERT(Rotation::Top == 0 && (Rotation::Bottom + Rotation::CCW) == Rotation::NumRotations - 1,
+		      "The rotation constants are used as indices below.");
+
 	if (NumRotations == 0)
 		return;
 	Rotation::Type PrevRot = Rand8::Get(0, Rotation::NumRotations - 1);
@@ -149,6 +156,21 @@ void Scramble(uint8_t NumRotations)
 	}
 }
 
+// Dim all facelets of the cube.
+void DimAll()
+{
+	for (FaceletIndex i = 0; i < NumFacelets; ++i)
+		g_Facelets[i] &= ~Facelet::Bright;
+}
+
+// Brighten the given facelet.
+void BrightenFacelet(Facelet::Type FaceletIdx)
+{
+	assert(FaceletIdx < NumFacelets);
+	g_Facelets[FaceletIdx] |= Facelet::Bright;
+}
+
+
 // Set brightness state randomly to all facelets.
 void BrightenRandom()
 {
@@ -161,7 +183,7 @@ void BrightenRandom()
 }
 
 // Brighten facelets according to a given rotation.
-void Brighten(Rotation::Type Face)
+void BrightenFace(Rotation::Type Face)
 {
 	STATIC_ASSERT(sizeof(SRotation) == NumAffectedFacelets * sizeof(FaceletIndex),
 		      "SRotation is expected to contain NumAffectedFacelets contiguous indices.");
@@ -170,7 +192,7 @@ void Brighten(Rotation::Type Face)
 	if (Face >= Rotation::CCW)
 		Face -= Rotation::CCW;
 
-	const FaceletIndex* Indices = &Rot[Face].Side[0];
+	const FaceletIndex* Indices = &f_Rot[Face].Side[0];
 	for (uint8_t i = 0; i < NumAffectedFacelets; ++i)
 	{
 		FaceletIndex Index = pgm_read_byte(Indices++);
@@ -186,12 +208,12 @@ void RotateSide(Rotation::Type Face)
 	if (Face >= Rotation::CCW)
 	{
 		Face -= Rotation::CCW;
-		const FaceletIndex* Indices = &Rot[Face].Side[0];
+		const FaceletIndex* Indices = &f_Rot[Face].Side[0];
 		RotateCCW(Indices, NumSideFacelets);
 	}
 	else
 	{
-		const FaceletIndex* Indices = &Rot[Face].Side[0];
+		const FaceletIndex* Indices = &f_Rot[Face].Side[0];
 		RotateCW(Indices, NumSideFacelets);
 	}
 }
@@ -204,12 +226,12 @@ void RotateFront(Rotation::Type Face)
 	if (Face >= Rotation::CCW)
 	{
 		Face -= Rotation::CCW;
-		const FaceletIndex* Indices = &Rot[Face].Front[0];
+		const FaceletIndex* Indices = &f_Rot[Face].Front[0];
 		RotateCCW(Indices, NumFrontFacelets);
 	}
 	else
 	{
-		const FaceletIndex* Indices = &Rot[Face].Front[0];
+		const FaceletIndex* Indices = &f_Rot[Face].Front[0];
 		RotateCW(Indices, NumFrontFacelets);
 	}
 }
@@ -223,13 +245,6 @@ void Rotate(Rotation::Type Face)
 	RotateSide(Face);
 	RotateFront(Face);
 	RotateFront(Face);
-}
-
-// Dim all facelets of the cube.
-void DimAll()
-{
-	for (FaceletIndex i = 0; i < NumFacelets; ++i)
-		g_Facelets[i] &= ~Facelet::Bright;
 }
 
 }

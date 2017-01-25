@@ -36,7 +36,7 @@ int main(void)
 		
 		bool CubeHasChanged;
 		Rotation::Type CurRotation;
-		Controls::UpdateCube(&CurRotation, &CubeHasChanged);
+		Controls::UpdateCubeBrightnessAndDetermineAction(&CurRotation, &CubeHasChanged);
 		if (CubeHasChanged)
 			Leds::Update();
 		

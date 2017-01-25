@@ -67,10 +67,15 @@ const Facelet::Type* GetFacelets();	// Get pointer to 54 facelets, in LED order.
 void Reset();				// Reset cube to solved state.
 bool IsSolved();			// Returns true if the cube is in the solved state.
 void Scramble(uint8_t NumRotations);	// Perform NumRotations random rotations on the cube.
+
+// Brightness-related.
+void DimAll();				// Dim all facelets of the cube.
+void BrightenFacelet(Facelet::Type FaceletIdx);	// Brighten the given facelet.
 void BrightenRandom();			// Set brightness state randomly to all facelets.
-void Brighten(Rotation::Type Face);	// Brighten facelets according to a given rotation.
+void BrightenFace(Rotation::Type Face);	// Brighten facelets according to a given rotation.
+
+// Rotation-related.
 void RotateSide(Rotation::Type Face);	// Move facelets on the side of a face, one step, according to a given rotation.
 void RotateFront(Rotation::Type Face);	// Move facelets on the front of a face, one step, according to a given rotation.
 void Rotate(Rotation::Type Face);	// Move all facelets of a face, all steps, according to a given rotation.
-void DimAll();				// Dim all facelets of the cube.
 }

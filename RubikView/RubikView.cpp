@@ -230,7 +230,7 @@ static void HandleOperations(GLFWwindow* Window)
 
 		if (pGLState->m_OpStep == 0)
 		{
-			Cube::Brighten(pGLState->m_CurOp);
+			Cube::BrightenFace(pGLState->m_CurOp);
 			++pGLState->m_OpStep;
 		}
 

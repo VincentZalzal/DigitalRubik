@@ -54,16 +54,11 @@ void UpdateCounter(uint8_t SensorIdx, bool SensorIsOn)
 	g_SensorCounters[SensorIdx] = NewValue;
 }
 
-// Set the brightness of every facelets according to the sensors currently ON
-// and the rotation that is about to happen. Returns the rotation that should
-// be applied in pCurRotation and whether any brightness has changed (whether
-// LEDs should be refreshed) in pCubeHasChanged.
-void UpdateCubeBrightnessAndDetermineAction(
-	Rotation::Type* pCurRotation, bool* pCubeHasChanged)
+// Set the brightness of every facelet according to the sensors currently ON
+// and the rotation that is about to happen. Returns whether any brightness has
+// changed, indicating a LEDs refresh is needed.
+bool UpdateCubeBrightness()
 {
-	assert(pCurRotation != 0);
-	assert(pCubeHasChanged != 0);
-
 	// Copy current facelets to determine later if any facelet has changed.
 	Facelet::Type OldFacelets[Cube::NumFacelets];
 	const Facelet::Type* const pFacelets = Cube::GetFacelets();
@@ -82,20 +77,23 @@ void UpdateCubeBrightnessAndDetermineAction(
 		}
 	}
 
-	// TODO: implement UpdateCubeBrightnessAndDetermineAction
+	// TODO: implement Brighten according to rotation about to happen.
+
+	// Determine if any facelet has changed.
+	for (uint8_t FaceletIdx = 0; FaceletIdx < Cube::NumFacelets; ++FaceletIdx)
+		if (OldFacelets[FaceletIdx] != pFacelets[FaceletIdx])
+			return true;
+	return false;
+}
+
+// Returns the current action to perform according to the sensors state.
+Rotation::Type DetermineAction()
+{
+	// TODO: implement DetermineAction
 	STATIC_ASSERT(Rotation::Top == 0 && Rotation::Bottom == 5,
 		      "The rotation constants are used as indices below.");
 
-	// Determine if any facelet has changed.
-	*pCubeHasChanged = false;
-	for (uint8_t FaceletIdx = 0; FaceletIdx < Cube::NumFacelets; ++FaceletIdx)
-	{
-		if (OldFacelets[FaceletIdx] != pFacelets[FaceletIdx])
-		{
-			*pCubeHasChanged = true;
-			break;
-		}
-	}
+	return Rotation::None;
 }
 
 }

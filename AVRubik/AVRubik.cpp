@@ -34,12 +34,11 @@ int main(void)
 	{
 		Rings::Read();
 		
-		bool CubeHasChanged;
-		Rotation::Type CurRotation;
-		Controls::UpdateCubeBrightnessAndDetermineAction(&CurRotation, &CubeHasChanged);
+		bool CubeHasChanged = Controls::UpdateCubeBrightness();
 		if (CubeHasChanged)
 			Leds::Update();
-		
+
+		Rotation::Type CurRotation = Controls::DetermineAction();
 		if (CurRotation != Rotation::None)
 		{
 			// Perform the rotation animation.

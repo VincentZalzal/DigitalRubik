@@ -4,6 +4,10 @@
 // Unnamed namespace for internal details.
 namespace
 {
+// Specifies the number of positive sensor read of a rotation configuration
+// before performing the rotation. A sensor read takes about 25 ms.
+const int8_t RotationDetectionThreshold = 10;	// about 250 ms
+
 // Sensor counters. A positive value of N means that the sensor has been ON
 // for N consecutive Read(), and a negative value of -N means that it has been
 // OFF for N consecutive Read().
@@ -18,6 +22,20 @@ const Facelet::Type f_SensorToFacelet[Controls::NumSensors] PROGMEM =
 	 8,  9, 10, 11,
 	12, 13, 14, 15
 };
+
+// Go through all sensor combinations that perform a rotation. If any of them
+// reach the given threshold, return the first one (according to the order
+// of the Rotation constants). Note: each counter value represents the time
+// for one successful sensor read, which takes about 25 ms.
+Rotation::Type DetectRotation(int8_t CounterThreshold)
+{
+	assert(CounterThreshold > 0);
+
+	// TODO: implement DetectRotation
+	STATIC_ASSERT(Rotation::Top == 0 && Rotation::Bottom == 5,
+		      "The rotation constants are used as indices below.");
+	return Rotation::None;
+}
 
 }
 
@@ -77,9 +95,14 @@ bool UpdateCubeBrightness()
 		}
 	}
 
-	// TODO: implement Brighten according to rotation about to happen.
+	// Check if there is an active rotation with a very low threshold.
+	// This allows to see the corresponding face brighten for a while
+	// before the rotation, while still allowing to cancel the movement.
+	Rotation::Type Rot = DetectRotation(1);
+	if (Rot != Rotation::None)
+		Cube::BrightenFace(Rot);
 
-	// Determine if any facelet has changed.
+	// Determine if any facelet brightness has changed.
 	for (uint8_t FaceletIdx = 0; FaceletIdx < Cube::NumFacelets; ++FaceletIdx)
 		if (OldFacelets[FaceletIdx] != pFacelets[FaceletIdx])
 			return true;
@@ -89,11 +112,7 @@ bool UpdateCubeBrightness()
 // Returns the current action to perform according to the sensors state.
 Rotation::Type DetermineAction()
 {
-	// TODO: implement DetermineAction
-	STATIC_ASSERT(Rotation::Top == 0 && Rotation::Bottom == 5,
-		      "The rotation constants are used as indices below.");
-
-	return Rotation::None;
+	return DetectRotation(RotationDetectionThreshold);
 }
 
 }

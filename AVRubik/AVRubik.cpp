@@ -11,16 +11,34 @@
 
 void Init()
 {
-	Rings::Init();
-	Leds::Init();
-	Cube::Reset();
-	Rand8::Seed(42); // TODO: seed RNG using ADC
-	
 	// Disable unused components to reduce power consumption.
 	// USI, Timer/Counter 0, TImer/Counter 1.
 	PRR = _BV(PRTIM1) | _BV(PRTIM0) | _BV(PRUSI);
 	// Analog Comparator
 	ACSR |= _BV(ACD);
+
+	Rings::Init();
+	Leds::Init();
+	Cube::Reset();
+
+	// Create RNG seed by using the ADC on an open pin.
+	// For each conversion, keep the LSB.
+	ADMUX |= _BV(MUX0); // Temporarily work on PA1 instead of PA0.
+	Rand8::Type Seed = 0;
+	for (uint8_t i = 0; i < 8*sizeof(Rand8::Type); ++i)
+	{
+		ADCSRA |= _BV(ADSC);			// start ADC conversion
+		loop_until_bit_is_set(ADCSRA, ADIF);	// wait for conversion to end
+		uint8_t Res = ADCL;			// read lower 2 bits
+		Res <<= 1;				// keep lsb only
+		Seed >>= 1;				// leave room for the new bit
+		Seed |= Res;				// add new bit
+		Res = ADCH;				// finish reading the ADC
+		ADCSRA |= _BV( ADIF );			// reset ADC interrupt flag
+	}
+	ADMUX |= _BV(MUX0); // Switch back to PA0.
+	Rand8::Seed(Seed);
+	// TODO: have debug code that shows the Seed on the LEDs.
 }
 
 int main(void)

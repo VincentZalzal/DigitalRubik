@@ -4,26 +4,37 @@
 
 STATIC_ASSERT(Facelet::Bright == 8, "This constant must be bitwise-exclusive with the others.");
 
+// Color levels
+#ifdef USE_SIMULATOR
+	const uint8_t L1 =  64; // stands for Level 1 (dimmest)
+	const uint8_t L2 = 128; // stands for Level 2
+	const uint8_t L3 = 255; // stands for Level 3 (brightest)
+#else
+	const uint8_t L1 = 12; // stands for Level 1 (dimmest)
+	const uint8_t L2 = 24; // stands for Level 2
+	const uint8_t L3 = 48; // stands for Level 3 (brightest)
+#endif
+
 // Color LUT: index must be a Facelet::Type.
 // It must be in SRAM for fast access during LED update.
 // Color order is RGB.
 const SColor Colors[15] =
 {
-	{  0,   0,   0}, // Black 
-	{128, 128, 128}, // White 
-	{128,   0,   0}, // Red   
-	{  0,   0, 128}, // Blue  
-	{128,  64,   0}, // Orange
-	{  0, 128,   0}, // Green 
-	{128, 128,   0}, // Yellow
-	{128,   0, 128}, // Unused (magenta)
-	{  0,   0,   0}, // Bright Black 
-	{255, 255, 255}, // Bright White 
-	{255,   0,   0}, // Bright Red   
-	{  0,   0, 255}, // Bright Blue  
-	{255, 128,   0}, // Bright Orange
-	{  0, 255,   0}, // Bright Green 
-	{255, 255,   0}  // Bright Yellow
+	{ 0,  0,  0}, // Black 
+	{L2, L2, L2}, // White 
+	{L2,  0,  0}, // Red   
+	{ 0,  0, L2}, // Blue  
+	{L2, L1,  0}, // Orange
+	{ 0, L2,  0}, // Green 
+	{L2, L2,  0}, // Yellow
+	{L2,  0, L2}, // Unused (magenta)
+	{ 0,  0,  0}, // Bright Black 
+	{L3, L3, L3}, // Bright White 
+	{L3,  0,  0}, // Bright Red   
+	{ 0,  0, L3}, // Bright Blue  
+	{L3, L2,  0}, // Bright Orange
+	{ 0, L3,  0}, // Bright Green 
+	{L3, L3,  0}  // Bright Yellow
 };
 
 // Unnamed namespace for internal details.
@@ -59,18 +70,18 @@ const SRotation f_Rot[Cube::NumFaces] PROGMEM =
 };
 
 // Swap the facelets of the cube in clockwise order.
-void RotateCW(const FaceletIndex* Indices, uint8_t NumFacelets)
+void RotateCW(const FaceletIndex* f_Indices, uint8_t NumFacelets)
 {
-	assert(Indices != 0);
+	assert(f_Indices != 0);
 	assert(NumFacelets == NumSideFacelets || NumFacelets == NumFrontFacelets);
 
-	FaceletIndex CurIndex = pgm_read_byte(Indices++);
+	FaceletIndex CurIndex = pgm_read_byte(f_Indices++);
 	Facelet::Type Temp = g_Facelets[CurIndex];
 	
 	uint8_t Count = NumFacelets - 1;
 	do
 	{
-		FaceletIndex NextIndex = pgm_read_byte(Indices++);
+		FaceletIndex NextIndex = pgm_read_byte(f_Indices++);
 		g_Facelets[CurIndex] = g_Facelets[NextIndex];
 		CurIndex = NextIndex;
 	} while (--Count);
@@ -79,19 +90,19 @@ void RotateCW(const FaceletIndex* Indices, uint8_t NumFacelets)
 }
 
 // Swap the facelets of the cube in counter-clockwise order.
-void RotateCCW(const FaceletIndex* Indices, uint8_t NumFacelets)
+void RotateCCW(const FaceletIndex* f_Indices, uint8_t NumFacelets)
 {
-	assert(Indices != 0);
+	assert(f_Indices != 0);
 	assert(NumFacelets == NumSideFacelets || NumFacelets == NumFrontFacelets);
 
-	Indices += NumFacelets;
-	FaceletIndex CurIndex = pgm_read_byte(--Indices);
+	f_Indices += NumFacelets;
+	FaceletIndex CurIndex = pgm_read_byte(--f_Indices);
 	Facelet::Type Temp = g_Facelets[CurIndex];
 
 	uint8_t Count = NumFacelets - 1;
 	do
 	{
-		FaceletIndex NextIndex = pgm_read_byte(--Indices);
+		FaceletIndex NextIndex = pgm_read_byte(--f_Indices);
 		g_Facelets[CurIndex] = g_Facelets[NextIndex];
 		CurIndex = NextIndex;
 	} while (--Count);
@@ -192,10 +203,10 @@ void BrightenFace(Rotation::Type Face)
 	if (Face >= Rotation::CCW)
 		Face -= Rotation::CCW;
 
-	const FaceletIndex* Indices = &f_Rot[Face].Side[0];
+	const FaceletIndex* f_Indices = &f_Rot[Face].Side[0];
 	for (uint8_t i = 0; i < NumAffectedFacelets; ++i)
 	{
-		FaceletIndex Index = pgm_read_byte(Indices++);
+		FaceletIndex Index = pgm_read_byte(f_Indices++);
 		g_Facelets[Index] |= Facelet::Bright;
 	}
 }
@@ -208,13 +219,13 @@ void RotateSide(Rotation::Type Face)
 	if (Face >= Rotation::CCW)
 	{
 		Face -= Rotation::CCW;
-		const FaceletIndex* Indices = &f_Rot[Face].Side[0];
-		RotateCCW(Indices, NumSideFacelets);
+		const FaceletIndex* f_Indices = &f_Rot[Face].Side[0];
+		RotateCCW(f_Indices, NumSideFacelets);
 	}
 	else
 	{
-		const FaceletIndex* Indices = &f_Rot[Face].Side[0];
-		RotateCW(Indices, NumSideFacelets);
+		const FaceletIndex* f_Indices = &f_Rot[Face].Side[0];
+		RotateCW(f_Indices, NumSideFacelets);
 	}
 }
 
@@ -226,13 +237,13 @@ void RotateFront(Rotation::Type Face)
 	if (Face >= Rotation::CCW)
 	{
 		Face -= Rotation::CCW;
-		const FaceletIndex* Indices = &f_Rot[Face].Front[0];
-		RotateCCW(Indices, NumFrontFacelets);
+		const FaceletIndex* f_Indices = &f_Rot[Face].Front[0];
+		RotateCCW(f_Indices, NumFrontFacelets);
 	}
 	else
 	{
-		const FaceletIndex* Indices = &f_Rot[Face].Front[0];
-		RotateCW(Indices, NumFrontFacelets);
+		const FaceletIndex* f_Indices = &f_Rot[Face].Front[0];
+		RotateCW(f_Indices, NumFrontFacelets);
 	}
 }
 

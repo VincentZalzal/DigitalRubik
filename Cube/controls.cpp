@@ -57,7 +57,7 @@ Rotation::Type DetectRotation(int8_t CounterThreshold)
 	{
 		// Address in Flash memory of the array of 8 sensor indices
 		// related to the rotation RotIdx (either CW or CCW).
-		const uint8_t* SensorIndices = f_SensorsPerRotation[RotIdx];
+		const uint8_t* f_SensorIndices = f_SensorsPerRotation[RotIdx];
 		
 		// Construct a bitfield where each bit, starting from the LSB,
 		// indicates whether the corresponding sensor has reached the
@@ -67,7 +67,7 @@ Rotation::Type DetectRotation(int8_t CounterThreshold)
 
 		for (uint8_t i = 0; i < NumSensorsPerRotation; ++i)
 		{
-			uint8_t SensorIndex = pgm_read_byte(SensorIndices++);
+			uint8_t SensorIndex = pgm_read_byte(f_SensorIndices++);
 			SensorBitfield >>= 1;
 			if (g_SensorCounters[SensorIndex] >= CounterThreshold)
 				SensorBitfield |= 0x80;

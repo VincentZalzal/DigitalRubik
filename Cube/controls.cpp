@@ -18,6 +18,7 @@ int8_t g_SensorCounters[Controls::NumSensors];
 
 // This table converts a sensor index into a facelet index.
 // This is stored in flash memory and must be accessed using pgm_read_byte().
+#ifdef USE_SIMULATOR
 const Facelet::Type f_SensorToFacelet[Controls::NumSensors] PROGMEM =
 {
 	 0,  6,  2,  8,
@@ -27,11 +28,23 @@ const Facelet::Type f_SensorToFacelet[Controls::NumSensors] PROGMEM =
 	36, 42, 38, 44,
 	45, 51, 47, 53
 };
+#else
+const Facelet::Type f_SensorToFacelet[Controls::NumSensors] PROGMEM =
+{
+	 8,  6,  0,  4,
+	17, 15,  9, 13,
+	45, 47, 51, 53,
+	44, 42, 36, 40,
+	26, 20, 24, 18,
+	27, 31, 33, 35
+};
+#endif
 
 // This table gives the array of 8 sensor indices that correspond to a given
 // face index. CW and CCW are ignored. f_SensorsPerRotation[i][0] must always
 // turn face i CW, and the next sensors are in order.
 // This is stored in flash memory and must be accessed using pgm_read_byte().
+#ifdef USE_SIMULATOR
 const uint8_t f_SensorsPerRotation[Cube::NumFaces][NumSensorsPerRotation] PROGMEM =
 {
 	{ 4,  5,  8,  9, 12, 13, 16, 17},	// top
@@ -41,6 +54,17 @@ const uint8_t f_SensorsPerRotation[Cube::NumFaces][NumSensorsPerRotation] PROGME
 	{22, 20,  6,  4,  2,  0, 13, 15},	// left
 	{15, 14, 11, 10,  7,  6, 19, 18}	// bottom
 };
+#else
+const uint8_t f_SensorsPerRotation[Cube::NumFaces][NumSensorsPerRotation] PROGMEM =
+{
+	{ 1,  0,  6,  7, 22, 23, 14, 15},	// top
+	{18, 19,  4,  6, 11, 10, 15, 13},	// front
+	{19, 17, 21, 22,  9, 11,  0,  2},	// right
+	{17, 16, 12, 14,  8,  9,  7,  5},	// back
+	{16, 18,  3,  1, 10,  8, 23, 20},	// left
+	{20, 21,  5,  4,  2,  3, 13, 12}	// bottom
+};
+#endif
 
 // Go through all sensor combinations that perform a rotation. If any of them
 // reach the given threshold, return the first one (according to the order
@@ -103,8 +127,8 @@ void Reset()
 void UpdateCounter(uint8_t SensorIdx, bool SensorIsOn)
 {
 	assert(SensorIdx < NumSensors);
-	uint8_t OldValue = g_SensorCounters[SensorIdx];
-	uint8_t NewValue = OldValue;
+	int8_t OldValue = g_SensorCounters[SensorIdx];
+	int8_t NewValue = OldValue;
 	if (SensorIsOn)
 	{
 		if (OldValue <= 0)

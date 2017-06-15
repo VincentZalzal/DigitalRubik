@@ -10,14 +10,15 @@ STATIC_ASSERT(Facelet::Bright == 8, "This constant must be bitwise-exclusive wit
 	const uint8_t L2 = 128; // stands for Level 2
 	const uint8_t L3 = 255; // stands for Level 3 (brightest)
 #else
-	const uint8_t L1 = 12; // stands for Level 1 (dimmest)
-	const uint8_t L2 = 24; // stands for Level 2
-	const uint8_t L3 = 48; // stands for Level 3 (brightest)
+	const uint8_t L1 = 9; // stands for Level 1 (dimmest)
+	const uint8_t L2 = 18; // stands for Level 2
+	const uint8_t L3 = 56; // stands for Level 3 (brightest)
 #endif
 
 // Color LUT: index must be a Facelet::Type.
 // It must be in SRAM for fast access during LED update.
 // Color order is RGB.
+#ifdef USE_SIMULATOR
 const SColor Colors[15] =
 {
 	{ 0,  0,  0}, // Black 
@@ -36,6 +37,26 @@ const SColor Colors[15] =
 	{ 0, L3,  0}, // Bright Green 
 	{L3, L3,  0}  // Bright Yellow
 };
+#else
+const SColor Colors[15] =
+{
+	{ 0,  0,  0}, // Black 
+	{L2,  0,  0}, // Red   
+	{ 0,  0, L2}, // Blue  
+	{L2, L2,  0}, // Yellow
+	{L2, L1,  0}, // Orange
+	{ 0, L2,  0}, // Green 
+	{L2, L2, L2}, // White 
+	{L2,  0, L2}, // Unused (magenta)
+	{ 0,  0,  0}, // Bright Black 
+	{L3,  0,  0}, // Bright Red   
+	{ 0,  0, L3}, // Bright Blue  
+	{L3, L3,  0}, // Bright Yellow
+	{L3, L2,  0}, // Bright Orange
+	{ 0, L3,  0}, // Bright Green 
+	{L3, L3, L3}  // Bright White 
+};
+#endif
 
 // Unnamed namespace for internal details.
 namespace 
@@ -59,6 +80,7 @@ struct SRotation
 
 // These are in the same order as namespace Rotation.
 // This is stored in flash memory and must be accessed using pgm_read_byte().
+#ifdef USE_SIMULATOR
 const SRotation f_Rot[Cube::NumFaces] PROGMEM =
 {
 	{{ 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42}, { 2,  5,  8,  7,  6,  3,  0,  1},  4},	// top
@@ -68,6 +90,17 @@ const SRotation f_Rot[Cube::NumFaces] PROGMEM =
 	{{47, 46, 45, 11, 10,  9,  2,  1,  0, 33, 34, 35}, {38, 41, 44, 43, 42, 39, 36, 37}, 40},	// left
 	{{35, 32, 29, 26, 23, 20, 17, 14, 11, 44, 41, 38}, {47, 50, 53, 52, 51, 48, 45, 46}, 49}	// bottom
 };
+#else
+const SRotation f_Rot[Cube::NumFaces] PROGMEM =
+{
+	{{ 6,  7,  8,  9, 12, 13, 33, 34, 35, 36, 39, 40}, {51, 52, 53, 48, 47, 46, 45, 50}, 49},	// top
+	{{26, 25, 24, 17, 10,  9, 53, 52, 51, 40, 41, 42}, { 4,  3,  0,  1,  8,  7,  6,  5},  2},	// front
+	{{18, 19, 20, 31, 32, 33, 47, 48, 53,  8,  1,  0}, {17, 16, 15, 14, 13, 12,  9, 10}, 11},	// right
+	{{20, 21, 26, 44, 37, 36, 45, 46, 47, 13, 14, 15}, {31, 30, 27, 28, 35, 34, 33, 32}, 29},	// back
+	{{26, 25, 24,  4,  5,  6, 51, 50, 45, 35, 28, 27}, {44, 43, 42, 41, 40, 39, 36, 37}, 38},	// left
+	{{27, 30, 31, 15, 16, 17,  0,  3,  4, 42, 43, 44}, {26, 21, 20, 19, 18, 23, 24, 25}, 22}	// bottom
+};
+#endif
 
 // Swap the facelets of the cube in clockwise order.
 void RotateCW(const FaceletIndex* f_Indices, uint8_t NumFacelets)

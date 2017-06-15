@@ -112,14 +112,14 @@ void Init( void )
 	SH_REG_PORT &= ~( _BV( SH_REG_SER_IN ) | _BV( SH_REG_SRCK ) | _BV( SH_REG_RCK ) );
 
 	// Préparation du ADC
-	// Référence de Vcc utilisée par défaut, prescaler /8
-	ADMUX = _BV(ADPS1) | _BV(ADPS0);
-	// (1 << ADEN) : active le ADC
-	ADCSRA = _BV(ADEN);
+	// Référence de Vcc utilisée par défaut
+	ADMUX  = 0;
+	// (1 << ADEN) : active le ADC, prescaler /8
+	ADCSRA = _BV(ADEN) | _BV(ADPS1) | _BV(ADPS0);
 	// (1 << ADLAR) : Ajusté à gauche
 	ADCSRB = _BV(ADLAR);
 	// Réduire la consommation
-	DIDR0 = _BV(ADC0D);
+	DIDR0 |= _BV(ADC1D);
 	
 	Reset();
 }

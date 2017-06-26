@@ -1,5 +1,14 @@
 #pragma once
 
+// Set this to 1 to enable debugging code (even in release build)
+#define DEBUG_CODE 0
+
+#if DEBUG_CODE
+	#define DEBUG_OP(X) X
+#else
+	#define DEBUG_OP(X)
+#endif
+
 // Flash memory handling (for AVR only)
 #ifdef USE_SIMULATOR
 	// This is needed for non-AVR platforms.

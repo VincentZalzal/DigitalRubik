@@ -10,9 +10,10 @@ STATIC_ASSERT(Facelet::Bright == 8, "This constant must be bitwise-exclusive wit
 	const uint8_t L2 = 128; // stands for Level 2
 	const uint8_t L3 = 255; // stands for Level 3 (brightest)
 #else
-	const uint8_t L1 = 9; // stands for Level 1 (dimmest)
+	const uint8_t L1 = 7; // stands for Level 1 (dimmest)
 	const uint8_t L2 = 18; // stands for Level 2
 	const uint8_t L3 = 56; // stands for Level 3 (brightest)
+	const uint8_t L4 = 21; // stands for Level 2
 #endif
 
 // Color LUT: index must be a Facelet::Type.
@@ -52,7 +53,7 @@ const SColor Colors[15] =
 	{L3,  0,  0}, // Bright Red   
 	{ 0,  0, L3}, // Bright Blue  
 	{L3, L3,  0}, // Bright Yellow
-	{L3, L2,  0}, // Bright Orange
+	{L3, L4,  0}, // Bright Orange
 	{ 0, L3,  0}, // Bright Green 
 	{L3, L3, L3}  // Bright White 
 };
@@ -62,6 +63,11 @@ const SColor Colors[15] =
 namespace 
 {
 Facelet::Type g_Facelets[Cube::NumFacelets]; // Global cube state.
+
+#if DEBUG_CODE
+const uint8_t NumBackupFacelets = 9;
+Facelet::Type g_BackupFacelets[NumBackupFacelets]; // Backup of the cube state for debug display.
+#endif
 
 const uint8_t NumSideFacelets     = 12; // Number of facelets on the side of a turning face.
 const uint8_t NumFrontFacelets    =  8; // Number of facelets on the front of a turning face, excluding the center.
@@ -100,6 +106,14 @@ const SRotation f_Rot[Cube::NumFaces] PROGMEM =
 	{{26, 25, 24,  4,  5,  6, 51, 50, 45, 35, 28, 27}, {44, 43, 42, 41, 40, 39, 36, 37}, 38},	// left
 	{{27, 30, 31, 15, 16, 17,  0,  3,  4, 42, 43, 44}, {26, 21, 20, 19, 18, 23, 24, 25}, 22}	// bottom
 };
+#endif
+
+#if DEBUG_CODE
+#ifdef USE_SIMULATOR
+const FaceletIndex g_DebugIndexes[NumBackupFacelets] = {17, 14, 11, 16, 13, 10, 15, 12, 9};
+#else
+const FaceletIndex g_DebugIndexes[NumBackupFacelets] = {0, 3, 4, 1, 2, 5, 8, 7, 6};
+#endif
 #endif
 
 // Swap the facelets of the cube in clockwise order.
@@ -157,11 +171,9 @@ const Facelet::Type* GetFacelets()
 // Reset cube to solved state.
 void Reset()
 {
-	STATIC_ASSERT(Facelet::Unused - Facelet::White == 6, "The color order is assumed below.");
-
 	// Numerical order of colors in Facelet match initialization order.
 	Facelet::Type* pFacelet = g_Facelets;
-	for (Facelet::Type Color = Facelet::White; Color < Facelet::Unused; ++Color)
+	for (Facelet::Type Color = 1; Color <= Cube::NumFaces; ++Color)
 		for (uint8_t i = 0; i < NumFaceletsPerFace; ++i)
 			*pFacelet++ = Color;
 }
@@ -169,11 +181,9 @@ void Reset()
 // Returns true if the cube is in the solved state.
 bool IsSolved()
 {
-	STATIC_ASSERT(Facelet::Unused - Facelet::White == 6, "The color order is assumed below.");
-
 	// Numerical order of colors in Facelet match initialization order.
 	const Facelet::Type* pFacelet = g_Facelets;
-	for (Facelet::Type Color = Facelet::White; Color < Facelet::Unused; ++Color)
+	for (Facelet::Type Color = 1; Color <= Cube::NumFaces; ++Color)
 		for (uint8_t i = 0; i < NumFaceletsPerFace; ++i)
 			if (*pFacelet++ != Color)
 				return false;
@@ -291,4 +301,30 @@ void Rotate(Rotation::Type Face)
 	RotateFront(Face);
 }
 
+#if DEBUG_CODE
+
+void Backup()
+{
+	for (FaceletIndex i = 0; i < NumBackupFacelets; ++i)
+		g_BackupFacelets[i] = g_Facelets[i];
+}
+
+void Restore()
+{
+	for (FaceletIndex i = 0; i < NumBackupFacelets; ++i)
+		g_Facelets[i] = g_BackupFacelets[i];
+}
+
+void PrintUInt8(uint8_t Value)
+{
+	for (FaceletIndex i = 0; i < NumBackupFacelets; ++i)
+	{
+		g_Facelets[g_DebugIndexes[i]] = ((Value & 1) != 0)
+			? Facelet::White
+			: Facelet::Black;
+		Value >>= 1;
+	}
+}
+
+#endif
 }

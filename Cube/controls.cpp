@@ -6,7 +6,7 @@ namespace
 {
 // Specifies the number of positive sensor read of a rotation configuration
 // before performing the rotation. A sensor read takes about 25 ms.
-const int8_t RotationDetectionThreshold = 10;	// about 250 ms
+const int8_t RotationDetectionThreshold = 20;	// about 500 ms
 
 // For a given face rotation, there are 8 sensors involved in detecting it.
 const uint8_t NumSensorsPerRotation = 8;

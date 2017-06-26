@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "config.h"
 
 // "enum" representing the state of a facelet via its color.
 namespace Facelet
@@ -10,12 +11,21 @@ typedef uint8_t Type;
 const Type Black  = 0;
 
 // Order of colors maps to initialization LED order
+#ifdef USE_SIMULATOR
 const Type White  = 1;	// At reset: top
 const Type Red    = 2;	// At reset: front
 const Type Blue   = 3;	// At reset: right
 const Type Orange = 4;	// At reset: back
 const Type Green  = 5;	// At reset: left
 const Type Yellow = 6;	// At reset: bottom
+#else
+const Type White  = 6;	// At reset: top
+const Type Red    = 1;	// At reset: front
+const Type Blue   = 2;	// At reset: right
+const Type Orange = 4;	// At reset: back
+const Type Green  = 5;	// At reset: left
+const Type Yellow = 3;	// At reset: bottom
+#endif
 
 const Type Unused = 7;
 
@@ -78,4 +88,11 @@ void BrightenFace(Rotation::Type Face);	// Brighten facelets according to a give
 void RotateSide(Rotation::Type Face);	// Move facelets on the side of a face, one step, according to a given rotation.
 void RotateFront(Rotation::Type Face);	// Move facelets on the front of a face, one step, according to a given rotation.
 void Rotate(Rotation::Type Face);	// Move all facelets of a face, all steps, according to a given rotation.
+
+#if DEBUG_CODE
+void Backup();
+void Restore();
+
+void PrintUInt8(uint8_t Value);
+#endif
 }

@@ -8,6 +8,7 @@
 #define NUM_SCRAMBLE_ROTATIONS		30
 #define ROTATION_DELAY_MS		150
 #define VICTORY_ANIMATION_DELAY_MS	400
+#define NUM_VICTORY_ANIMATION_ITER	15
 
 void Init()
 {
@@ -43,67 +44,71 @@ void Init()
 	}
 	ADMUX &= ~_BV(MUX0); // Switch back to PA0.
 	Rand8::Seed(Seed);
-	// TODO: have debug code that shows the Seed on the LEDs.
 }
 
 int main(void)
 {
 	Init();
-
-	Cube::Scramble(NUM_SCRAMBLE_ROTATIONS);
-	Leds::Update();
-
-	// Temporary debug code to tests rings.
-	//while (1)
-	//{
-	//	Rings::Read();
-	//	bool CubeHasChanged = Controls::UpdateCubeBrightness();
-	//	if (CubeHasChanged)
-	//	{
-	//		Leds::Update();
-	//		_delay_ms(200);
-	//	}
-	//}
-
-	while (!Cube::IsSolved())
+	
+	for (;;)
 	{
-		Rings::Read();
-
-		bool CubeHasChanged = Controls::UpdateCubeBrightness();
-		Rotation::Type CurRotation = Controls::DetermineAction();
-		if (CurRotation != Rotation::None)
-		{
-			// Perform the rotation animation.
-			Cube::RotateSide(CurRotation);
-			Cube::RotateFront(CurRotation);
-			Leds::Update();
-			_delay_ms(ROTATION_DELAY_MS);
-			
-			Cube::RotateSide(CurRotation);
-			Leds::Update();
-			_delay_ms(ROTATION_DELAY_MS);
-
-			Cube::RotateSide(CurRotation);
-			Cube::RotateFront(CurRotation);
-			Leds::Update();
-			_delay_ms(ROTATION_DELAY_MS);
-			
-			Rings::Reset();
-			Controls::Reset();
-			Cube::DimAll();
-			Leds::Update();
-		}
-		else if (CubeHasChanged)
-		{
-			Leds::Update();
-		}
-	}
-
-	while (1)
-	{
-		// Perform victory animation forever.
-		Cube::BrightenRandom();
+		Cube::Reset();
+		Cube::Scramble(NUM_SCRAMBLE_ROTATIONS);
 		Leds::Update();
-		_delay_ms(VICTORY_ANIMATION_DELAY_MS);
+		
+		// Temporary debug code to tests rings.
+		//while (1)
+		//{
+		//	Rings::Read();
+		//	bool CubeHasChanged = Controls::UpdateCubeBrightness();
+		//	if (CubeHasChanged)
+		//	{
+		//		Leds::Update();
+		//		_delay_ms(200);
+		//	}
+		//}
+
+		while (!Cube::IsSolved())
+		{
+			Rings::Read();
+
+			bool CubeHasChanged = Controls::UpdateCubeBrightness();
+			Rotation::Type CurRotation = Controls::DetermineAction();
+			if (CurRotation != Rotation::None)
+			{
+				// Perform the rotation animation.
+				Cube::RotateSide(CurRotation);
+				Cube::RotateFront(CurRotation);
+				Leds::Update();
+				_delay_ms(ROTATION_DELAY_MS);
+				
+				Cube::RotateSide(CurRotation);
+				Leds::Update();
+				_delay_ms(ROTATION_DELAY_MS);
+
+				Cube::RotateSide(CurRotation);
+				Cube::RotateFront(CurRotation);
+				Leds::Update();
+				_delay_ms(ROTATION_DELAY_MS);
+				
+				Rings::Reset();
+				Controls::Reset();
+				Cube::DimAll();
+				Leds::Update();
+			}
+			else if (CubeHasChanged)
+			{
+				Leds::Update();
+			}
+		}
+
+		for (uint8_t i = 0; i< NUM_VICTORY_ANIMATION_ITER; ++i)
+		{
+			// Perform victory animation forever.
+			Cube::BrightenRandom();
+			Leds::Update();
+			_delay_ms(VICTORY_ANIMATION_DELAY_MS);
+		}
+		_delay_ms(1500);
 	}
 }

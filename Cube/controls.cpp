@@ -202,4 +202,25 @@ Action::Type DetermineAction()
 	return DetectRotation(RotationDetectionThreshold);
 }
 
+// Added the given rotation to the front of the queue.
+void PushAction(Rotation::Type Rot)
+{
+	assert(IsRotation(Rot));
+	for (uint8_t QueueIdx = ActionQueueSize-1; QueueIdx > 0; --QueueIdx)
+		g_ActionQueue[QueueIdx] = g_ActionQueue[QueueIdx - 1];
+	g_ActionQueue[0] = Rot;
+}
+
+// Remove the rotation at the front of the queue. If the queue is empty, returns Rotation::None.
+Rotation::Type PopAction()
+{
+	// Since the queue is always filled with Rotation::None, we don't need
+	// a special case to detect an empty queue.
+	Rotation::Type Rot = g_ActionQueue[0];
+	for (uint8_t QueueIdx = 0; QueueIdx < ActionQueueSize-1; ++QueueIdx)
+		g_ActionQueue[QueueIdx] = g_ActionQueue[QueueIdx + 1];
+	g_ActionQueue[ActionQueueSize-1] = Rotation::None;
+	return Rot;
+}
+
 }

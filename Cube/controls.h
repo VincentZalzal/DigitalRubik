@@ -9,6 +9,7 @@ using namespace Rotation;
 
 const Type ResetEasy   = 254;
 const Type ResetNormal = 253;
+const Type Undo        = 252;
 }
 
 namespace Controls
@@ -25,4 +26,8 @@ bool UpdateCubeBrightness();
 
 // Returns the current action to perform according to the sensors state.
 Action::Type DetermineAction();
+
+// Manage the action queue for undo operations.
+void PushAction(Rotation::Type Rot);
+Rotation::Type PopAction();
 }

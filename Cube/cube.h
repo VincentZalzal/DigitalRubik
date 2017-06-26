@@ -64,6 +64,11 @@ inline Type Opposite(Type Face)
 	return (Face < CCW ? Face + CCW : Face - CCW);
 }
 
+inline bool IsRotation(Type Face)
+{
+	return Face < NumRotations;
+}
+
 }
 
 // "class" for manipulating the cube state.

@@ -71,21 +71,36 @@ int main(void)
 			bool CubeHasChanged = Controls::UpdateCubeBrightness();
 			
 			Action::Type CurAction = Controls::DetermineAction();
+			Rotation::Type CurRotation = Rotation::None;
 			switch (CurAction)
 			{
 			case Action::ResetEasy:
 				NumScrambleRotations = NUM_SCRAMBLE_ROTATIONS_EASY;
 				MustReset = true;
-			break;
+				break;
 			case Action::ResetNormal:
 				NumScrambleRotations = NUM_SCRAMBLE_ROTATIONS_NORMAL;
 				MustReset = true;
-			break;
+				break;
 			case Action::None:
 				if (CubeHasChanged)
 					Leds::Update();
-			break;
-			default: // this is a rotation
+				break;
+			case Action::Undo:
+				// If not empty, pop action queue and do the
+				// opposite rotation.
+				CurRotation = Controls::PopAction();
+				if (CurRotation != Rotation::None)
+					CurRotation = Rotation::Opposite(CurRotation);
+				break;
+			default:
+				// This is a rotation, add it to the action queue.
+				CurRotation = CurAction;
+				Controls::PushAction(CurRotation);
+				break;
+			}
+			
+			if (CurRotation != Rotation::None)
 			{
 				// Perform the rotation animation.
 				Cube::RotateSide(CurAction);
@@ -106,8 +121,6 @@ int main(void)
 				Controls::ResetSensors();
 				Cube::DimAll();
 				Leds::Update();
-			}
-			break;
 			}
 		}
 
@@ -133,14 +146,14 @@ int main(void)
 				case Action::ResetEasy:
 					NumScrambleRotations = NUM_SCRAMBLE_ROTATIONS_EASY;
 					MustReset = true;
-				break;
+					break;
 				case Action::ResetNormal:
 					NumScrambleRotations = NUM_SCRAMBLE_ROTATIONS_NORMAL;
 					MustReset = true;
-				break;
+					break;
 				default:
-					// ignore all other actions
-				break;
+					// Ignore all other actions
+					break;
 				}
 			}
 		}

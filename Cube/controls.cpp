@@ -4,12 +4,21 @@
 // Unnamed namespace for internal details.
 namespace
 {
-// Specifies the number of positive sensor read of a rotation configuration
-// before performing the rotation. A sensor read takes about 25 ms.
-const int8_t RotationDetectionThreshold = 20;	// about 500 ms
+// Specifies the number of positive sensor read of an action configuration
+// before performing the action. A sensor read takes about 25 ms.
+const int8_t DetectionThreshold = 20;	// about 500 ms
 
 // For a given face rotation, there are 8 sensors involved in detecting it.
 const uint8_t NumSensorsPerRotation = 8;
+
+// For a given vertex, there are 3 sensors involved in detecting an undo operation.
+const uint8_t NumSensorsPerUndo = 3;
+
+// Number of sensor configurations that perform a reset.
+const uint8_t NumResetOps = 2;
+
+// For a given reset operation, there are 4 sensors involved in detecting it (a face).
+const uint8_t NumSensorsPerReset = 4;
 
 // Sensor counters. A positive value of N means that the sensor has been ON
 // for N consecutive Read(), and a negative value of -N means that it has been
@@ -60,6 +69,22 @@ const uint8_t f_SensorsPerRotation[Cube::NumFaces][NumSensorsPerRotation] PROGME
 	{22, 20,  6,  4,  2,  0, 13, 15},	// left
 	{15, 14, 11, 10,  7,  6, 19, 18}	// bottom
 };
+const uint8_t f_SensorsPerUndo[Cube::NumVertices][NumSensorsPerUndo] PROGMEM =
+{
+	{ 0,  0,  0},
+	{ 0,  0,  0},
+	{ 0,  0,  0},
+	{ 0,  0,  0},
+	{ 0,  0,  0},
+	{ 0,  0,  0},
+	{ 0,  0,  0},
+	{ 0,  0,  0}
+};
+const uint8_t f_SensorsPerReset[NumResetOps][NumSensorsPerReset] PROGMEM =
+{
+	{ 0,  0,  0,  0},	// ResetEasy, green face
+	{ 0,  0,  0,  0}	// ResetNormal, red face
+};
 #else
 const uint8_t f_SensorsPerRotation[Cube::NumFaces][NumSensorsPerRotation] PROGMEM =
 {
@@ -70,20 +95,36 @@ const uint8_t f_SensorsPerRotation[Cube::NumFaces][NumSensorsPerRotation] PROGME
 	{16, 18,  3,  1, 10,  8, 23, 20},	// left
 	{20, 21,  5,  4,  2,  3, 13, 12}	// bottom
 };
+const uint8_t f_SensorsPerUndo[Cube::NumVertices][NumSensorsPerUndo] PROGMEM =
+{
+	{ 0,  0,  0},
+	{ 0,  0,  0},
+	{ 0,  0,  0},
+	{ 0,  0,  0},
+	{ 0,  0,  0},
+	{ 0,  0,  0},
+	{ 0,  0,  0},
+	{ 0,  0,  0}
+};
+const uint8_t f_SensorsPerReset[NumResetOps][NumSensorsPerReset] PROGMEM =
+{
+	{ 0,  0,  0,  0},	// ResetEasy, green face
+	{ 0,  0,  0,  0}	// ResetNormal, red face
+};
 #endif
 
 // Go through all sensor combinations that perform a rotation. If any of them
 // reach the given threshold, return the first one (according to the order
 // of the Rotation constants). Note: each counter value represents the time
 // for one successful sensor read, which takes about 25 ms.
-Rotation::Type DetectRotation(int8_t CounterThreshold)
+Action::Type DetectRotation(int8_t CounterThreshold)
 {
 	assert(CounterThreshold > 0);
 
-	STATIC_ASSERT(Rotation::Top == 0 && Rotation::Bottom == 5,
+	STATIC_ASSERT(Action::Top == 0 && Action::Bottom == 5,
 		      "The rotation constants are used as indices below.");
 
-	for (Rotation::Type RotIdx = Rotation::Top; RotIdx <= Rotation::Bottom; ++RotIdx)
+	for (Action::Type RotIdx = Action::Top; RotIdx <= Action::Bottom; ++RotIdx)
 	{
 		// Address in Flash memory of the array of 8 sensor indices
 		// related to the rotation RotIdx (either CW or CCW).
@@ -111,10 +152,60 @@ Rotation::Type DetectRotation(int8_t CounterThreshold)
 		if (SensorBitfield == 0x11 || SensorBitfield == 0x44)
 			return RotIdx;
 		if (SensorBitfield == 0x22 || SensorBitfield == 0x88)
-			return RotIdx + Rotation::CCW;
+			return RotIdx + Action::CCW;
 	}
 
-	return Rotation::None;
+	return Action::None;
+}
+
+// Go through all sensor combinations that perform an undo. If any of them
+// reach the given threshold, return Action::Undo. Note: each counter value
+// represents the time for one successful sensor read, which takes about 25 ms.
+Action::Type DetectUndo(int8_t CounterThreshold)
+{
+	assert(CounterThreshold > 0);
+	
+	for (uint8_t VertexIdx = 0; VertexIdx < Cube::NumVertices; ++VertexIdx)
+	{
+		const uint8_t* f_SensorIndices = f_SensorsPerUndo[VertexIdx];
+		uint8_t i = 0;
+		for (; i < NumSensorsPerUndo; ++i)
+		{
+			uint8_t SensorIndex = pgm_read_byte(f_SensorIndices++);
+			if (g_SensorCounters[SensorIndex] < CounterThreshold)
+				break;
+		}
+		if (i == NumSensorsPerUndo)
+			return Action::Undo;
+	}
+	
+	return Action::None;
+}
+
+// Go through all sensor combinations that perform a reset. If any of them
+// reach the given threshold, return the reset action. Note: each counter value
+// represents the time for one successful sensor read, which takes about 25 ms.
+Action::Type DetectReset(int8_t CounterThreshold)
+{
+	assert(CounterThreshold > 0);
+	
+	for (uint8_t ResetIdx = 0; ResetIdx < NumResetOps; ++ResetIdx)
+	{
+		const uint8_t* f_SensorIndices = f_SensorsPerReset[ResetIdx];
+		uint8_t i = 0;
+		for (; i < NumSensorsPerReset; ++i)
+		{
+			uint8_t SensorIndex = pgm_read_byte(f_SensorIndices++);
+			if (g_SensorCounters[SensorIndex] < CounterThreshold)
+				break;
+		}
+		if (i == NumSensorsPerReset)
+		{
+			return (ResetIdx == 0 ? Action::ResetEasy : Action::ResetNormal);
+		}
+	}
+	
+	return Action::None;
 }
 
 }
@@ -185,8 +276,8 @@ bool UpdateCubeBrightness()
 	// Check if there is an active rotation with a very low threshold.
 	// This allows to see the corresponding face brighten for a while
 	// before the rotation, while still allowing to cancel the movement.
-	Rotation::Type Rot = DetectRotation(1);
-	if (Rot != Rotation::None)
+	Action::Type Rot = DetectRotation(1);
+	if (Rotation::IsRotation(Rot))
 		Cube::BrightenFace(Rot);
 
 	// Determine if any facelet brightness has changed.
@@ -199,13 +290,21 @@ bool UpdateCubeBrightness()
 // Returns the current action to perform according to the sensors state.
 Action::Type DetermineAction()
 {
-	return DetectRotation(RotationDetectionThreshold);
+	Action::Type CurAction = DetectReset(DetectionThreshold);
+	if (CurAction != Action::None)
+		return CurAction;
+
+	CurAction = DetectUndo(DetectionThreshold);
+	if (CurAction != Action::None)
+		return CurAction;
+
+	return DetectRotation(DetectionThreshold);
 }
 
 // Added the given rotation to the front of the queue.
 void PushAction(Rotation::Type Rot)
 {
-	assert(IsRotation(Rot));
+	assert(Rotation::IsRotation(Rot));
 	for (uint8_t QueueIdx = ActionQueueSize-1; QueueIdx > 0; --QueueIdx)
 		g_ActionQueue[QueueIdx] = g_ActionQueue[QueueIdx - 1];
 	g_ActionQueue[0] = Rot;

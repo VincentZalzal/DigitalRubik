@@ -77,6 +77,7 @@ namespace Cube
 const uint8_t NumFaceletsPerFace = 9;
 const uint8_t NumFaces = 6;
 const uint8_t NumFacelets = NumFaceletsPerFace * NumFaces;
+const uint8_t NumVertices = 8;
 
 const Facelet::Type* GetFacelets();	// Get pointer to 54 facelets, in LED order.
 void Reset();				// Reset cube to solved state.

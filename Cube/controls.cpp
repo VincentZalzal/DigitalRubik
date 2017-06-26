@@ -71,19 +71,19 @@ const uint8_t f_SensorsPerRotation[Cube::NumFaces][NumSensorsPerRotation] PROGME
 };
 const uint8_t f_SensorsPerUndo[Cube::NumVertices][NumSensorsPerUndo] PROGMEM =
 {
-	{ 0,  0,  0},
-	{ 0,  0,  0},
-	{ 0,  0,  0},
-	{ 0,  0,  0},
-	{ 0,  0,  0},
-	{ 0,  0,  0},
-	{ 0,  0,  0},
-	{ 0,  0,  0}
+	{ 0, 13, 16},
+	{ 1,  9, 12},
+	{ 2, 17,  4},
+	{ 3,  5,  8},
+	{20,  6, 19},
+	{21, 10,  7},
+	{22, 18, 15},
+	{23, 14, 11}
 };
 const uint8_t f_SensorsPerReset[NumResetOps][NumSensorsPerReset] PROGMEM =
 {
-	{ 0,  0,  0,  0},	// ResetEasy, green face
-	{ 0,  0,  0,  0}	// ResetNormal, red face
+	{16, 17, 18, 19},	// ResetEasy, green face
+	{ 4,  5,  6,  7}	// ResetNormal, red face
 };
 #else
 const uint8_t f_SensorsPerRotation[Cube::NumFaces][NumSensorsPerRotation] PROGMEM =
@@ -97,19 +97,19 @@ const uint8_t f_SensorsPerRotation[Cube::NumFaces][NumSensorsPerRotation] PROGME
 };
 const uint8_t f_SensorsPerUndo[Cube::NumVertices][NumSensorsPerUndo] PROGMEM =
 {
-	{ 0,  0,  0},
-	{ 0,  0,  0},
-	{ 0,  0,  0},
-	{ 0,  0,  0},
-	{ 0,  0,  0},
-	{ 0,  0,  0},
-	{ 0,  0,  0},
-	{ 0,  0,  0}
+	{ 8, 23, 14},
+	{ 9,  7, 22},
+	{10, 15,  1},
+	{11,  0,  6},
+	{18,  3, 13},
+	{19,  4,  2},
+	{16, 12, 20},
+	{17, 21,  5}
 };
 const uint8_t f_SensorsPerReset[NumResetOps][NumSensorsPerReset] PROGMEM =
 {
-	{ 0,  0,  0,  0},	// ResetEasy, green face
-	{ 0,  0,  0,  0}	// ResetNormal, red face
+	{14, 15, 12, 13},	// ResetEasy, green face
+	{ 1,  0,  3,  2}	// ResetNormal, red face
 };
 #endif
 

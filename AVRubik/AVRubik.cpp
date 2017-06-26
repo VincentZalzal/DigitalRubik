@@ -103,17 +103,17 @@ int main(void)
 			if (CurRotation != Rotation::None)
 			{
 				// Perform the rotation animation.
-				Cube::RotateSide(CurAction);
-				Cube::RotateFront(CurAction);
+				Cube::RotateSide(CurRotation);
+				Cube::RotateFront(CurRotation);
 				Leds::Update();
 				_delay_ms(ROTATION_DELAY_MS);
 				
-				Cube::RotateSide(CurAction);
+				Cube::RotateSide(CurRotation);
 				Leds::Update();
 				_delay_ms(ROTATION_DELAY_MS);
 
-				Cube::RotateSide(CurAction);
-				Cube::RotateFront(CurAction);
+				Cube::RotateSide(CurRotation);
+				Cube::RotateFront(CurRotation);
 				Leds::Update();
 				_delay_ms(ROTATION_DELAY_MS);
 				

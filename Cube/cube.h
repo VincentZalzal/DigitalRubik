@@ -59,14 +59,15 @@ const Type NumRotations = 12;
 
 const Type None   = 255;
 
-inline Type Opposite(Type Face)
-{
-	return (Face < CCW ? Face + CCW : Face - CCW);
-}
-
 inline bool IsRotation(Type Face)
 {
 	return Face < NumRotations;
+}
+
+inline Type Opposite(Type Face)
+{
+	assert(IsRotation(Face));
+	return (Face < CCW ? Face + CCW : Face - CCW);
 }
 
 }

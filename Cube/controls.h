@@ -2,6 +2,15 @@
 
 #include "cube.h"
 
+namespace Action
+{
+// Import Rotation::Type, Rotation::Top, Rotation::Bottom, etc and Rotation::None.
+using namespace Rotation;
+
+const Type ResetEasy   = 254;
+const Type ResetNormal = 253;
+}
+
 namespace Controls
 {
 const uint8_t NumSensors = 24;	// Number of facelets used as sensors.
@@ -15,5 +24,5 @@ void UpdateCounter(uint8_t SensorIdx, bool SensorIsOn);	// Increment (or reset) 
 bool UpdateCubeBrightness();
 
 // Returns the current action to perform according to the sensors state.
-Rotation::Type DetermineAction();
+Action::Type DetermineAction();
 }

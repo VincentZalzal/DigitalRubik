@@ -197,7 +197,7 @@ bool UpdateCubeBrightness()
 }
 
 // Returns the current action to perform according to the sensors state.
-Rotation::Type DetermineAction()
+Action::Type DetermineAction()
 {
 	return DetectRotation(RotationDetectionThreshold);
 }

@@ -5,7 +5,8 @@
 #include "../Cube/cube.h"
 #include "../Cube/controls.h"
 
-#define NUM_SCRAMBLE_ROTATIONS		30
+#define NUM_SCRAMBLE_ROTATIONS_NORMAL	30
+#define NUM_SCRAMBLE_ROTATIONS_EASY	1
 #define ROTATION_DELAY_MS		150
 #define VICTORY_ANIMATION_DELAY_MS	400
 #define NUM_VICTORY_ANIMATION_ITER	15
@@ -56,44 +57,48 @@ int main(void)
 {
 	Init();
 	
+	uint8_t NumScrambleRotations = NUM_SCRAMBLE_ROTATIONS_NORMAL;
 	for (;;)
 	{
 		Reset();
-		Cube::Scramble(NUM_SCRAMBLE_ROTATIONS);
+		Cube::Scramble(NumScrambleRotations);
 		Leds::Update();
-		
-		// Temporary debug code to tests rings.
-		//while (1)
-		//{
-		//	Rings::Read();
-		//	bool CubeHasChanged = Controls::UpdateCubeBrightness();
-		//	if (CubeHasChanged)
-		//	{
-		//		Leds::Update();
-		//		_delay_ms(200);
-		//	}
-		//}
 
-		while (!Cube::IsSolved())
+		bool MustReset = false;
+		while (!Cube::IsSolved() && !MustReset)
 		{
 			Rings::Read();
-
 			bool CubeHasChanged = Controls::UpdateCubeBrightness();
-			Rotation::Type CurRotation = Controls::DetermineAction();
-			if (CurRotation != Rotation::None)
+			
+			Action::Type CurAction = Controls::DetermineAction();
+			switch (CurAction)
+			{
+			case Action::ResetEasy:
+				NumScrambleRotations = NUM_SCRAMBLE_ROTATIONS_EASY;
+				MustReset = true;
+			break;
+			case Action::ResetNormal:
+				NumScrambleRotations = NUM_SCRAMBLE_ROTATIONS_NORMAL;
+				MustReset = true;
+			break;
+			case Action::None:
+				if (CubeHasChanged)
+					Leds::Update();
+			break;
+			default: // this is a rotation
 			{
 				// Perform the rotation animation.
-				Cube::RotateSide(CurRotation);
-				Cube::RotateFront(CurRotation);
+				Cube::RotateSide(CurAction);
+				Cube::RotateFront(CurAction);
 				Leds::Update();
 				_delay_ms(ROTATION_DELAY_MS);
 				
-				Cube::RotateSide(CurRotation);
+				Cube::RotateSide(CurAction);
 				Leds::Update();
 				_delay_ms(ROTATION_DELAY_MS);
 
-				Cube::RotateSide(CurRotation);
-				Cube::RotateFront(CurRotation);
+				Cube::RotateSide(CurAction);
+				Cube::RotateFront(CurAction);
 				Leds::Update();
 				_delay_ms(ROTATION_DELAY_MS);
 				
@@ -102,19 +107,42 @@ int main(void)
 				Cube::DimAll();
 				Leds::Update();
 			}
-			else if (CubeHasChanged)
-			{
-				Leds::Update();
+			break;
 			}
 		}
 
-		for (uint8_t i = 0; i< NUM_VICTORY_ANIMATION_ITER; ++i)
+		if (!MustReset)
 		{
-			// Perform victory animation forever.
-			Cube::BrightenRandom();
+			// Perform victory animation.
+			for (uint8_t i = 0; i< NUM_VICTORY_ANIMATION_ITER; ++i)
+			{
+				Cube::BrightenRandom();
+				Leds::Update();
+				_delay_ms(VICTORY_ANIMATION_DELAY_MS);
+			}
+			Cube::DimAll();
 			Leds::Update();
-			_delay_ms(VICTORY_ANIMATION_DELAY_MS);
+			
+			// Wait for reset command.
+			while (!MustReset)
+			{
+				Rings::Read();
+				Action::Type CurAction = Controls::DetermineAction();
+				switch (CurAction)
+				{
+				case Action::ResetEasy:
+					NumScrambleRotations = NUM_SCRAMBLE_ROTATIONS_EASY;
+					MustReset = true;
+				break;
+				case Action::ResetNormal:
+					NumScrambleRotations = NUM_SCRAMBLE_ROTATIONS_NORMAL;
+					MustReset = true;
+				break;
+				default:
+					// ignore all other actions
+				break;
+				}
+			}
 		}
-		_delay_ms(1500);
 	}
 }

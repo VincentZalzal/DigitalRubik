@@ -303,18 +303,21 @@ void Rotate(Rotation::Type Face)
 
 #if DEBUG_CODE
 
+// Save the facelets used by the printing functions
 void Backup()
 {
 	for (FaceletIndex i = 0; i < NumBackupFacelets; ++i)
 		g_BackupFacelets[i] = g_Facelets[i];
 }
 
+// Restore the facelets used by the printing functions
 void Restore()
 {
 	for (FaceletIndex i = 0; i < NumBackupFacelets; ++i)
 		g_Facelets[i] = g_BackupFacelets[i];
 }
 
+// Print a uint8_t in binary using one face of the cube.
 void PrintUInt8(uint8_t Value)
 {
 	for (FaceletIndex i = 0; i < NumBackupFacelets; ++i)

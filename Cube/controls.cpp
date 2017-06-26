@@ -16,6 +16,12 @@ const uint8_t NumSensorsPerRotation = 8;
 // OFF for N consecutive Read().
 int8_t g_SensorCounters[Controls::NumSensors];
 
+// Number of entries in the action queue. Maximum number of undo operations.
+const uint8_t ActionQueueSize = 16;
+
+// Queue of the last actions taken, most recent first.
+Rotation::Type g_ActionQueue[ActionQueueSize];
+
 // This table converts a sensor index into a facelet index.
 // This is stored in flash memory and must be accessed using pgm_read_byte().
 #ifdef USE_SIMULATOR
@@ -116,11 +122,18 @@ Rotation::Type DetectRotation(int8_t CounterThreshold)
 namespace Controls
 {
 
-// Set all sensor counters to 0.
-void Reset()
+// Set all sensor counters to 0 and reset undo actions.
+void ResetSensors()
 {
 	for (uint8_t SensorIdx = 0; SensorIdx < NumSensors; ++SensorIdx)
 		g_SensorCounters[SensorIdx] = 0;
+}
+
+// Empty the action queue.
+void ResetActionQueue()
+{
+	for (uint8_t QueueIdx = 0; QueueIdx < ActionQueueSize; ++QueueIdx)
+		g_ActionQueue[QueueIdx] = Rotation::None;
 }
 
 // Increment (or reset) counter of specified sensor according to SensorIsOn

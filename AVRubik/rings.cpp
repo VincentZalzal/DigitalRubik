@@ -120,8 +120,6 @@ void Init( void )
 	ADCSRB = _BV(ADLAR);
 	// Réduire la consommation
 	DIDR0 |= _BV(ADC1D);
-	
-	Reset();
 }
 
 // Lecture de tous les anneaux. Fonction devant être appelée de l'externe.

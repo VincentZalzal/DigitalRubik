@@ -24,8 +24,6 @@ void Init()
 
 	Rings::Init();
 	Leds::Init();
-	Cube::Reset();
-	Controls::Reset();
 
 	// Create RNG seed by using the ADC on an open pin.
 	// For each conversion, keep the LSB.
@@ -46,13 +44,21 @@ void Init()
 	Rand8::Seed(Seed);
 }
 
+void Reset()
+{
+	Cube::Reset();
+	Rings::Reset();
+	Controls::ResetSensors();
+	Controls::ResetActionQueue();
+}
+
 int main(void)
 {
 	Init();
 	
 	for (;;)
 	{
-		Cube::Reset();
+		Reset();
 		Cube::Scramble(NUM_SCRAMBLE_ROTATIONS);
 		Leds::Update();
 		
@@ -92,7 +98,7 @@ int main(void)
 				_delay_ms(ROTATION_DELAY_MS);
 				
 				Rings::Reset();
-				Controls::Reset();
+				Controls::ResetSensors();
 				Cube::DimAll();
 				Leds::Update();
 			}

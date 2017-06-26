@@ -90,9 +90,8 @@ void RotateFront(Rotation::Type Face);	// Move facelets on the front of a face, 
 void Rotate(Rotation::Type Face);	// Move all facelets of a face, all steps, according to a given rotation.
 
 #if DEBUG_CODE
-void Backup();
-void Restore();
-
-void PrintUInt8(uint8_t Value);
+void Backup();				// Save the facelets used by the printing functions
+void Restore();				// Restore the facelets used by the printing functions
+void PrintUInt8(uint8_t Value);		// Print a uint8_t in binary using one face of the cube.
 #endif
 }

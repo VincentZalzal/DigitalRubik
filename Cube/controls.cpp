@@ -124,6 +124,7 @@ Action::Type DetectRotation(int8_t CounterThreshold)
 	STATIC_ASSERT(Action::Top == 0 && Action::Bottom == 5,
 		      "The rotation constants are used as indices below.");
 
+	Action::Type DetectedRotation = Action::None;
 	for (Action::Type RotIdx = Action::Top; RotIdx <= Action::Bottom; ++RotIdx)
 	{
 		// Address in Flash memory of the array of 8 sensor indices
@@ -149,13 +150,22 @@ Action::Type DetectRotation(int8_t CounterThreshold)
 		// relate to opposing facelets. So, 0x11 and 0x44 indicates
 		// that the rotation occurs in the CW direction and 0x22 and
 		// 0x88 indicates the CCW direction.
+		Action::Type PossibleRotation = Action::None;
 		if (SensorBitfield == 0x11 || SensorBitfield == 0x44)
-			return RotIdx;
-		if (SensorBitfield == 0x22 || SensorBitfield == 0x88)
-			return RotIdx + Action::CCW;
+			PossibleRotation = RotIdx;
+		else if (SensorBitfield == 0x22 || SensorBitfield == 0x88)
+			PossibleRotation = RotIdx + Action::CCW;
+
+		if (PossibleRotation != Action::None)
+		{
+			// If two rotations are detected, choose neither.
+			if (DetectedRotation != Action::None)
+				return Action::None;
+			DetectedRotation = PossibleRotation;
+		}
 	}
 
-	return Action::None;
+	return DetectedRotation;
 }
 
 // Go through all sensor combinations that perform an undo. If any of them

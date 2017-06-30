@@ -92,13 +92,17 @@ void BrightenRandom();			// Set brightness state randomly to all facelets.
 void BrightenFace(Rotation::Type Face);	// Brighten facelets according to a given rotation.
 
 // Rotation-related.
-void RotateSide(Rotation::Type Face);	// Move facelets on the side of a face, one step, according to a given rotation.
-void RotateFront(Rotation::Type Face);	// Move facelets on the front of a face, one step, according to a given rotation.
-void Rotate(Rotation::Type Face);	// Move all facelets of a face, all steps, according to a given rotation.
+void Rotate(Rotation::Type Face);	// Move all facelets of a face, according to a given rotation.
 
 #if DEBUG_CODE
 void Backup();				// Save the facelets used by the printing functions
 void Restore();				// Restore the facelets used by the printing functions
 void PrintUInt8(uint8_t Value);		// Print a uint8_t in binary using one face of the cube.
 #endif
+
+namespace Animation
+{
+void Rotate(Rotation::Type Face);
+uint16_t Next();
+}
 }

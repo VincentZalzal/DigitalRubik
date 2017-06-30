@@ -7,7 +7,6 @@ struct SGLState
 	static const uint8_t NO_OP = 255;
 
 	uint8_t m_CurOp;
-	uint8_t m_OpStep;
 	double  m_OpTime;
 
 	GLfloat m_Yaw;
@@ -24,7 +23,6 @@ SGLState::SGLState()
 	Cube::Reset();
 	Cube::Scramble(30);
 	m_CurOp  = NO_OP;
-	m_OpStep = 0;
 	m_OpTime = 0.0;
 
 	m_Yaw   = -30.0f;
@@ -36,9 +34,9 @@ void SGLState::StartOp(uint8_t NewOp)
 {
 	if (m_CurOp == NO_OP)
 	{
-		m_OpStep = 0;
 		m_OpTime = glfwGetTime();
 		m_CurOp  = NewOp;
+		Cube::Animation::Rotate(NewOp);
 	}
 }
 
@@ -219,50 +217,24 @@ static void HandleHeldKeys(GLFWwindow* Window)
 
 static void HandleOperations(GLFWwindow* Window)
 {
+	const double LED_UPDATE_DELAY_MS = 2.2;
 	SGLState* pGLState = static_cast<SGLState*>(glfwGetWindowUserPointer(Window));
-
-	const int NumSteps = 5;
-	const double StepTimes[NumSteps] = {0.0, 0.5, 0.65, 0.8, 1.0};
 
 	if (pGLState->m_CurOp != SGLState::NO_OP)
 	{
-		double DeltaTime = glfwGetTime() - pGLState->m_OpTime;
-
-		if (pGLState->m_OpStep == 0)
+		double CurTime = glfwGetTime();
+		double DeltaTime = CurTime - pGLState->m_OpTime;
+		if (DeltaTime >= 0.0)
 		{
-			Cube::BrightenFace(pGLState->m_CurOp);
-			++pGLState->m_OpStep;
-		}
-
-		if (pGLState->m_OpStep == 1 && DeltaTime >= StepTimes[1])
-		{
-			Cube::RotateSide(pGLState->m_CurOp);
-			Cube::RotateFront(pGLState->m_CurOp);
-			++pGLState->m_OpStep;
-		}
-
-		if (pGLState->m_OpStep == 2 && DeltaTime >= StepTimes[2])
-		{
-			Cube::RotateSide(pGLState->m_CurOp);
-			++pGLState->m_OpStep;
-		}
-
-		if (pGLState->m_OpStep == 3 && DeltaTime >= StepTimes[3])
-		{
-			Cube::RotateSide(pGLState->m_CurOp);
-			Cube::RotateFront(pGLState->m_CurOp);
-			++pGLState->m_OpStep;
-		}
-
-		if (pGLState->m_OpStep == 4 && DeltaTime >= StepTimes[4])
-		{
-			Cube::DimAll();
-			++pGLState->m_OpStep;
-		}
-
-		if (pGLState->m_OpStep == NumSteps)
-		{
-			pGLState->m_CurOp = SGLState::NO_OP;
+			uint16_t NextDelayMs = Cube::Animation::Next();
+			if (NextDelayMs != 0)
+			{
+				pGLState->m_OpTime = CurTime + (NextDelayMs + LED_UPDATE_DELAY_MS) / 1000.0;
+			}
+			else
+			{
+				pGLState->m_CurOp = SGLState::NO_OP;
+			}
 		}
 	}
 }

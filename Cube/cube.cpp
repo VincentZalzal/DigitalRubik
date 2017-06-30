@@ -157,6 +157,80 @@ void RotateCCW(const FaceletIndex* f_Indices, uint8_t NumFacelets)
 	g_Facelets[CurIndex] = Temp;
 }
 
+// Move facelets on the side of a face, one step, according to a given rotation.
+void RotateSide(Rotation::Type Face)
+{
+	assert(Face < 2 * Rotation::CCW);
+
+	if (Face >= Rotation::CCW)
+	{
+		Face -= Rotation::CCW;
+		const FaceletIndex* f_Indices = &f_Rot[Face].Side[0];
+		RotateCCW(f_Indices, NumSideFacelets);
+	}
+	else
+	{
+		const FaceletIndex* f_Indices = &f_Rot[Face].Side[0];
+		RotateCW(f_Indices, NumSideFacelets);
+	}
+}
+
+// Move facelets on the front of a face, one step, according to a given rotation.
+void RotateFront(Rotation::Type Face)
+{
+	assert(Face < 2 * Rotation::CCW);
+
+	if (Face >= Rotation::CCW)
+	{
+		Face -= Rotation::CCW;
+		const FaceletIndex* f_Indices = &f_Rot[Face].Front[0];
+		RotateCCW(f_Indices, NumFrontFacelets);
+	}
+	else
+	{
+		const FaceletIndex* f_Indices = &f_Rot[Face].Front[0];
+		RotateCW(f_Indices, NumFrontFacelets);
+	}
+}
+
+// Animation-related
+
+// On the AVR, delays will be about 2.2 ms longer because of the LEDs update.
+#define ROTATION_DELAY_MS		200
+
+typedef uint16_t (*AnimFuncType)();
+
+uint16_t NoAnim();
+
+uint16_t DoRotation();
+uint16_t EndRotation();
+
+AnimFuncType   g_AnimFunc = &NoAnim;
+uint8_t        g_AnimStepIdx;
+Rotation::Type g_AnimRotationFace;
+
+uint16_t NoAnim()
+{
+	return 0;
+}
+
+uint16_t DoRotation()
+{
+	RotateSide(g_AnimRotationFace);
+	if (g_AnimStepIdx != 1)
+		RotateFront(g_AnimRotationFace);
+	if (++g_AnimStepIdx == 3)
+		g_AnimFunc = &EndRotation;
+	return ROTATION_DELAY_MS;
+}
+
+uint16_t EndRotation()
+{
+	Cube::DimAll();
+	g_AnimFunc = &NoAnim;
+	return 0;
+}
+
 }
 
 namespace Cube
@@ -254,43 +328,7 @@ void BrightenFace(Rotation::Type Face)
 	}
 }
 
-// Move facelets on the side of a face, one step, according to a given rotation.
-void RotateSide(Rotation::Type Face)
-{
-	assert(Face < 2 * Rotation::CCW);
-
-	if (Face >= Rotation::CCW)
-	{
-		Face -= Rotation::CCW;
-		const FaceletIndex* f_Indices = &f_Rot[Face].Side[0];
-		RotateCCW(f_Indices, NumSideFacelets);
-	}
-	else
-	{
-		const FaceletIndex* f_Indices = &f_Rot[Face].Side[0];
-		RotateCW(f_Indices, NumSideFacelets);
-	}
-}
-
-// Move facelets on the front of a face, one step, according to a given rotation.
-void RotateFront(Rotation::Type Face)
-{
-	assert(Face < 2 * Rotation::CCW);
-
-	if (Face >= Rotation::CCW)
-	{
-		Face -= Rotation::CCW;
-		const FaceletIndex* f_Indices = &f_Rot[Face].Front[0];
-		RotateCCW(f_Indices, NumFrontFacelets);
-	}
-	else
-	{
-		const FaceletIndex* f_Indices = &f_Rot[Face].Front[0];
-		RotateCW(f_Indices, NumFrontFacelets);
-	}
-}
-
-// Move all facelets of a face, all steps, according to a given rotation.
+// Move all facelets of a face, according to a given rotation.
 void Rotate(Rotation::Type Face)
 {
 	assert(Face < 2 * Rotation::CCW);
@@ -330,4 +368,24 @@ void PrintUInt8(uint8_t Value)
 }
 
 #endif
+
+namespace Animation
+{
+
+void Rotate(Rotation::Type Face)
+{
+	Cube::DimAll();
+	Cube::BrightenFace(Face);
+	g_AnimFunc         = &DoRotation;
+	g_AnimStepIdx      = 0;
+	g_AnimRotationFace = Face;
+}
+
+uint16_t Next()
+{
+	return (*g_AnimFunc)();
+}
+
+}
+
 }

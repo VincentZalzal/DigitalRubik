@@ -7,7 +7,6 @@
 
 #define NUM_SCRAMBLE_ROTATIONS_NORMAL	30
 #define NUM_SCRAMBLE_ROTATIONS_EASY	1
-#define ROTATION_DELAY_MS		150
 #define VICTORY_ANIMATION_DELAY_MS	400
 #define NUM_VICTORY_ANIMATION_ITER	15
 
@@ -51,6 +50,28 @@ void Reset()
 	Rings::Reset();
 	Controls::ResetSensors();
 	Controls::ResetActionQueue();
+}
+
+// This function is necessary to be able to sleep using a delay that isn't
+// known at compile-time.
+void Sleep(uint16_t DelayMs)
+{
+	while (DelayMs--)
+		_delay_ms(1);
+}
+
+void Animate(bool HiSpeed = false)
+{
+	for (;;)
+	{
+		uint16_t NextDelayMs = Cube::Animation::Next();
+		Leds::Update();
+		if (NextDelayMs == 0)
+			break;
+		if (HiSpeed)
+			NextDelayMs = (NextDelayMs + 7) >> 3; // ceil(NextDelayMs / 8)
+		Sleep(NextDelayMs);
+	}
 }
 
 int main(void)
@@ -102,25 +123,10 @@ int main(void)
 			
 			if (CurRotation != Rotation::None)
 			{
-				// Perform the rotation animation.
-				Cube::RotateSide(CurRotation);
-				Cube::RotateFront(CurRotation);
-				Leds::Update();
-				_delay_ms(ROTATION_DELAY_MS);
-				
-				Cube::RotateSide(CurRotation);
-				Leds::Update();
-				_delay_ms(ROTATION_DELAY_MS);
-
-				Cube::RotateSide(CurRotation);
-				Cube::RotateFront(CurRotation);
-				Leds::Update();
-				_delay_ms(ROTATION_DELAY_MS);
-				
+				Cube::Animation::Rotate(CurRotation);
+				Animate();
 				Rings::Reset();
 				Controls::ResetSensors();
-				Cube::DimAll();
-				Leds::Update();
 			}
 		}
 

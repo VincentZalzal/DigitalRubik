@@ -7,8 +7,6 @@
 
 #define NUM_SCRAMBLE_ROTATIONS_NORMAL	30
 #define NUM_SCRAMBLE_ROTATIONS_EASY	1
-#define VICTORY_ANIMATION_DELAY_MS	400
-#define NUM_VICTORY_ANIMATION_ITER	15
 
 void Init()
 {
@@ -133,15 +131,9 @@ int main(void)
 		if (!MustReset)
 		{
 			// Perform victory animation.
-			for (uint8_t i = 0; i< NUM_VICTORY_ANIMATION_ITER; ++i)
-			{
-				Cube::BrightenRandom();
-				Leds::Update();
-				_delay_ms(VICTORY_ANIMATION_DELAY_MS);
-			}
-			Cube::DimAll();
-			Leds::Update();
-			
+			Cube::Animation::Victory();
+			Animate();
+
 			// Wait for reset command.
 			while (!MustReset)
 			{

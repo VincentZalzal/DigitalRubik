@@ -88,7 +88,6 @@ void Scramble(uint8_t NumRotations);	// Perform NumRotations random rotations on
 // Brightness-related.
 void DimAll();				// Dim all facelets of the cube.
 void BrightenFacelet(Facelet::Type FaceletIdx);	// Brighten the given facelet.
-void BrightenRandom();			// Set brightness state randomly to all facelets.
 void BrightenFace(Rotation::Type Face);	// Brighten facelets according to a given rotation.
 
 // Rotation-related.
@@ -103,6 +102,8 @@ void PrintUInt8(uint8_t Value);		// Print a uint8_t in binary using one face of 
 namespace Animation
 {
 void Rotate(Rotation::Type Face);
+void Victory();
+
 uint16_t Next();
 }
 }

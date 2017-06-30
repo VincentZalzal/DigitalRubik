@@ -196,14 +196,20 @@ void RotateFront(Rotation::Type Face)
 // Animation-related
 
 // On the AVR, delays will be about 2.2 ms longer because of the LEDs update.
-#define ROTATION_DELAY_MS		200
+#define ROTATION_DELAY_MS			200
+
+#define NUM_BRIGHT_FACELETS_DURING_VICTORY	25
+#define VICTORY_ANIMATION_DELAY_MS		400
+#define NUM_VICTORY_ANIMATION_ITER		15
 
 typedef uint16_t (*AnimFuncType)();
 
 uint16_t NoAnim();
 
 uint16_t DoRotation();
-uint16_t EndRotation();
+uint16_t DoVictory();
+
+uint16_t EndAnim();
 
 AnimFuncType   g_AnimFunc = &NoAnim;
 uint8_t        g_AnimStepIdx;
@@ -220,11 +226,25 @@ uint16_t DoRotation()
 	if (g_AnimStepIdx != 1)
 		RotateFront(g_AnimRotationFace);
 	if (++g_AnimStepIdx == 3)
-		g_AnimFunc = &EndRotation;
+		g_AnimFunc = &EndAnim;
 	return ROTATION_DELAY_MS;
 }
 
-uint16_t EndRotation()
+// Set brightness state randomly to all facelets.
+uint16_t DoVictory()
+{
+	Cube::DimAll();
+	for (uint8_t i = 0; i < NUM_BRIGHT_FACELETS_DURING_VICTORY; ++i)
+	{
+		FaceletIndex Index = Rand8::Get(0, Cube::NumFacelets-1);
+		g_Facelets[Index] |= Facelet::Bright;
+	}
+	if (++g_AnimStepIdx == NUM_VICTORY_ANIMATION_ITER)
+		g_AnimFunc = &EndAnim;
+	return VICTORY_ANIMATION_DELAY_MS;
+}
+
+uint16_t EndAnim()
 {
 	Cube::DimAll();
 	g_AnimFunc = &NoAnim;
@@ -298,18 +318,6 @@ void BrightenFacelet(Facelet::Type FaceletIdx)
 	g_Facelets[FaceletIdx] |= Facelet::Bright;
 }
 
-
-// Set brightness state randomly to all facelets.
-void BrightenRandom()
-{
-	DimAll();
-	for (uint8_t i = 0; i < 25; ++i)
-	{
-		FaceletIndex Index = Rand8::Get(0, NumFacelets-1);
-		g_Facelets[Index] |= Facelet::Bright;
-	}
-}
-
 // Brighten facelets according to a given rotation.
 void BrightenFace(Rotation::Type Face)
 {
@@ -379,6 +387,12 @@ void Rotate(Rotation::Type Face)
 	g_AnimFunc         = &DoRotation;
 	g_AnimStepIdx      = 0;
 	g_AnimRotationFace = Face;
+}
+
+void Victory()
+{
+	g_AnimFunc         = &DoVictory;
+	g_AnimStepIdx      = 0;
 }
 
 uint16_t Next()

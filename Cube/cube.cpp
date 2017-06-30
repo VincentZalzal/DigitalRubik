@@ -202,6 +202,8 @@ void RotateFront(Rotation::Type Face)
 #define VICTORY_ANIMATION_DELAY_MS		400
 #define NUM_VICTORY_ANIMATION_ITER		15
 
+#define ROTATION_ANIMATION_VERSION		1
+
 typedef uint16_t (*AnimFuncType)();
 
 uint16_t NoAnim();
@@ -220,6 +222,7 @@ uint16_t NoAnim()
 	return 0;
 }
 
+#if ROTATION_ANIMATION_VERSION == 1
 uint16_t DoRotation()
 {
 	RotateSide(g_AnimRotationFace);
@@ -229,6 +232,145 @@ uint16_t DoRotation()
 		g_AnimFunc = &EndAnim;
 	return ROTATION_DELAY_MS;
 }
+#endif
+
+#if ROTATION_ANIMATION_VERSION == 2
+Facelet::Type g_RotBackupSideFacelets[NumSideFacelets];
+Facelet::Type g_RotBackupFrontFacelets[NumFrontFacelets];
+
+uint16_t DoRotationFadeToBlack();
+uint16_t DoRotationSetFinalColors();
+
+// Get the rotation index structure according to the face.
+const SRotation& GetRot()
+{
+	Rotation::Type Face = g_AnimRotationFace;
+	if (Face >= Rotation::CCW)
+		Face -= Rotation::CCW;
+	return f_Rot[Face];
+}
+
+uint8_t GetSideIdx()
+{
+	uint8_t SideIdx = (g_AnimRotationFace >= Rotation::CCW ? g_AnimStepIdx : 11 - g_AnimStepIdx);
+	assert(SideIdx < NumSideFacelets);
+	return SideIdx;
+}
+
+uint8_t SideIdxToFrontIdx(uint8_t SideIdx)
+{
+	uint8_t FrontIdx = 0;
+	switch (SideIdx)
+	{
+	case  0: FrontIdx = 0; break;
+	case  1: FrontIdx = 1; break;
+	case  2: FrontIdx = 2; break;
+	case  3: FrontIdx = 2; break;
+	case  4: FrontIdx = 3; break;
+	case  5: FrontIdx = 4; break;
+	case  6: FrontIdx = 4; break;
+	case  7: FrontIdx = 5; break;
+	case  8: FrontIdx = 6; break;
+	case  9: FrontIdx = 6; break;
+	case 10: FrontIdx = 7; break;
+	case 11: FrontIdx = 0; break;
+	}
+	assert(FrontIdx < NumFrontFacelets);
+	return FrontIdx;
+}
+
+uint8_t GetBkpSideIdx(uint8_t SideIdx)
+{
+	uint8_t BkpIdx = SideIdx + (g_AnimRotationFace >= Rotation::CCW ? 9 : 3); // 9 == - 3 + 12
+	if (BkpIdx >= NumSideFacelets)
+		BkpIdx -= NumSideFacelets;
+	assert(SideIdx < NumSideFacelets);
+	return BkpIdx;
+}
+
+uint8_t GetBkpFrontIdx(uint8_t FrontIdx)
+{
+	uint8_t BkpIdx = FrontIdx + (g_AnimRotationFace >= Rotation::CCW ? 6 : 2); // 6 == - 2 + 8
+	if (BkpIdx >= NumFrontFacelets)
+		BkpIdx -= NumFrontFacelets;
+	assert(FrontIdx < NumFrontFacelets);
+	return BkpIdx;
+}
+
+uint16_t DoRotation()
+{
+	STATIC_ASSERT(sizeof(SRotation) == NumAffectedFacelets * sizeof(FaceletIndex),
+		      "SRotation is expected to contain NumAffectedFacelets contiguous indices.");
+
+	// Get the rotation index structure.
+	const SRotation& CurRot = GetRot();
+
+	// Backup the side facelets.
+	const FaceletIndex* f_Indices = &CurRot.Side[0];
+	for (uint8_t i = 0; i < NumSideFacelets; ++i)
+	{
+		FaceletIndex Index = pgm_read_byte(f_Indices++);
+		g_RotBackupSideFacelets[i] = g_Facelets[Index];
+	}
+
+	// Backup the front facelets.
+	f_Indices = &CurRot.Front[0];
+	for (uint8_t i = 0; i < NumFrontFacelets; ++i)
+	{
+		FaceletIndex Index = pgm_read_byte(f_Indices++);
+		g_RotBackupFrontFacelets[i] = g_Facelets[Index];
+	}
+
+	// Start turning LEDs off.
+	g_AnimFunc = &DoRotationFadeToBlack;
+	return DoRotationFadeToBlack();
+}
+
+uint16_t DoRotationFadeToBlack()
+{
+	// Get the rotation index structure.
+	const SRotation& CurRot = GetRot();
+
+	// Turn next LED off.
+	uint8_t SideIdx = GetSideIdx();
+	FaceletIndex Index = pgm_read_byte(&CurRot.Side[SideIdx]);
+	g_Facelets[Index] = Facelet::Black;
+
+	uint8_t FrontIdx = SideIdxToFrontIdx(SideIdx);
+	Index = pgm_read_byte(&CurRot.Front[FrontIdx]);
+	g_Facelets[Index] = Facelet::Black;
+
+	if (++g_AnimStepIdx == 12)
+	{
+		g_AnimFunc = &DoRotationSetFinalColors;
+		g_AnimStepIdx = 0;
+	}
+	return 25;
+}
+
+uint16_t DoRotationSetFinalColors()
+{
+	// Get the rotation index structure.
+	const SRotation& CurRot = GetRot();
+
+	// Turn next LED back on using the backup.
+	uint8_t SideIdx = GetSideIdx();
+	FaceletIndex Index = pgm_read_byte(&CurRot.Side[SideIdx]);
+	uint8_t BkpIdx = GetBkpSideIdx(SideIdx);
+	g_Facelets[Index] = g_RotBackupSideFacelets[BkpIdx];
+
+	uint8_t FrontIdx = SideIdxToFrontIdx(SideIdx);
+	Index = pgm_read_byte(&CurRot.Front[FrontIdx]);
+	BkpIdx = GetBkpFrontIdx(FrontIdx);
+	g_Facelets[Index] = g_RotBackupFrontFacelets[BkpIdx];
+
+	if (++g_AnimStepIdx == 12)
+		g_AnimFunc = &EndAnim;
+
+	return 25;
+}
+
+#endif
 
 // Set brightness state randomly to all facelets.
 uint16_t DoVictory()

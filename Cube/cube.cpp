@@ -202,7 +202,7 @@ void RotateFront(Rotation::Type Face)
 #define VICTORY_ANIMATION_DELAY_MS		400
 #define NUM_VICTORY_ANIMATION_ITER		15
 
-#define ROTATION_ANIMATION_VERSION		1
+#define ROTATION_ANIMATION_VERSION		2
 
 typedef uint16_t (*AnimFuncType)();
 
@@ -352,7 +352,7 @@ uint16_t DoRotationFadeToBlack()
 		g_AnimFunc = &DoRotationSetFinalColors;
 		g_AnimStepIdx = 0;
 	}
-	return 25;
+	return 32;
 }
 
 uint16_t DoRotationSetFinalColors()
@@ -374,7 +374,7 @@ uint16_t DoRotationSetFinalColors()
 	if (++g_AnimStepIdx == 12)
 		g_AnimFunc = &EndAnim;
 
-	return 25;
+	return 32;
 }
 
 #endif
@@ -427,6 +427,174 @@ uint16_t DoRotationForReal()
 		g_AnimFunc = &EndAnim;
 
 	return 75;
+}
+
+#endif
+
+#if ROTATION_ANIMATION_VERSION == 4
+
+uint16_t DoRotationFadeToBlack();
+uint16_t DoRotationSetFinalColors();
+
+uint16_t DoRotation()
+{
+	BackupForRotation();
+
+	// Start turning LEDs off.
+	g_AnimFunc = &DoRotationFadeToBlack;
+	return DoRotationFadeToBlack();
+}
+
+uint16_t DoRotationFadeToBlack()
+{
+	// Get the rotation index structure.
+	const SRotation& CurRot = GetRot();
+
+	// Turn next LED off.
+	for (uint8_t i = 0; i < 4; ++i)
+	{
+		uint8_t SideIdx = GetSideIdx(g_AnimStepIdx + i*3);
+		FaceletIndex Index = pgm_read_byte(&CurRot.Side[SideIdx]);
+		g_Facelets[Index] = Facelet::Black;
+
+		uint8_t FrontIdx = SideIdxToFrontIdx(SideIdx);
+		Index = pgm_read_byte(&CurRot.Front[FrontIdx]);
+		g_Facelets[Index] = Facelet::Black;
+	}
+
+	if (++g_AnimStepIdx == 3)
+	{
+		g_AnimFunc = &DoRotationSetFinalColors;
+		g_AnimStepIdx = 0;
+	}
+	return 200;
+}
+
+uint16_t DoRotationSetFinalColors()
+{
+	// Get the rotation index structure.
+	const SRotation& CurRot = GetRot();
+
+	// Turn next LED back on using the backup.
+	for (uint8_t i = 0; i < 4; ++i)
+	{
+		uint8_t SideIdx = GetSideIdx(g_AnimStepIdx + i*3);
+		FaceletIndex Index = pgm_read_byte(&CurRot.Side[SideIdx]);
+		uint8_t BkpIdx = GetBkpSideIdx(SideIdx);
+		g_Facelets[Index] = g_RotBackupSideFacelets[BkpIdx];
+
+		uint8_t FrontIdx = SideIdxToFrontIdx(SideIdx);
+		Index = pgm_read_byte(&CurRot.Front[FrontIdx]);
+		BkpIdx = GetBkpFrontIdx(FrontIdx);
+		g_Facelets[Index] = g_RotBackupFrontFacelets[BkpIdx];
+	}
+
+	if (++g_AnimStepIdx == 3)
+		g_AnimFunc = &EndAnim;
+
+	return 200;
+}
+
+#endif
+
+#if ROTATION_ANIMATION_VERSION == 5
+
+uint16_t DoRotationForReal();
+
+uint16_t DoRotation()
+{
+	BackupForRotation();
+
+	// Start turning LEDs off.
+	g_AnimFunc = &DoRotationForReal;
+	return DoRotationForReal();
+}
+
+uint16_t DoRotationForReal()
+{
+	// Get the rotation index structure.
+	const SRotation& CurRot = GetRot();
+
+	// Turn next LED off.
+	if (g_AnimStepIdx < 3)
+	{
+		for (uint8_t i = 0; i < 4; ++i)
+		{
+			uint8_t SideIdx = GetSideIdx(g_AnimStepIdx + i*3);
+			FaceletIndex Index = pgm_read_byte(&CurRot.Side[SideIdx]);
+			g_Facelets[Index] = Facelet::Black;
+
+			uint8_t FrontIdx = SideIdxToFrontIdx(SideIdx);
+			Index = pgm_read_byte(&CurRot.Front[FrontIdx]);
+			g_Facelets[Index] = Facelet::Black;
+		}
+	}
+
+	// Turn next LED back on using the backup.
+	if (g_AnimStepIdx > 0)
+	{
+		for (uint8_t i = 0; i < 4; ++i)
+		{
+			uint8_t SideIdx = GetSideIdx(g_AnimStepIdx + i*3 - 1);
+			FaceletIndex Index = pgm_read_byte(&CurRot.Side[SideIdx]);
+			uint8_t BkpIdx = GetBkpSideIdx(SideIdx);
+			g_Facelets[Index] = g_RotBackupSideFacelets[BkpIdx];
+
+			uint8_t FrontIdx = SideIdxToFrontIdx(SideIdx);
+			Index = pgm_read_byte(&CurRot.Front[FrontIdx]);
+			BkpIdx = GetBkpFrontIdx(FrontIdx);
+			g_Facelets[Index] = g_RotBackupFrontFacelets[BkpIdx];
+		}
+	}
+
+	if (++g_AnimStepIdx == 4)
+		g_AnimFunc = &EndAnim;
+
+	return 200;
+}
+
+#endif
+
+#if ROTATION_ANIMATION_VERSION == 6
+
+uint16_t DoRotationFadeToBlack();
+uint16_t DoRotationSetFinalColors();
+
+uint16_t DoRotation()
+{
+	BackupForRotation();
+
+	// Start turning LEDs off.
+	g_AnimFunc = &DoRotationFadeToBlack;
+	return DoRotationFadeToBlack();
+}
+
+uint16_t DoRotationFadeToBlack()
+{
+	g_AnimFunc = &DoRotationSetFinalColors;
+	return 32;
+}
+
+uint16_t DoRotationSetFinalColors()
+{
+	// Get the rotation index structure.
+	const SRotation& CurRot = GetRot();
+
+	// Turn next LED back on using the backup.
+	uint8_t SideIdx = GetSideIdx(g_AnimStepIdx);
+	FaceletIndex Index = pgm_read_byte(&CurRot.Side[SideIdx]);
+	uint8_t BkpIdx = GetBkpSideIdx(SideIdx);
+	g_Facelets[Index] = (g_RotBackupSideFacelets[BkpIdx] & ~Facelet::Bright);
+
+	uint8_t FrontIdx = SideIdxToFrontIdx(SideIdx);
+	Index = pgm_read_byte(&CurRot.Front[FrontIdx]);
+	BkpIdx = GetBkpFrontIdx(FrontIdx);
+	g_Facelets[Index] = (g_RotBackupFrontFacelets[BkpIdx] & ~Facelet::Bright);
+
+	if (++g_AnimStepIdx == 12)
+		g_AnimFunc = &EndAnim;
+
+	return 32;
 }
 
 #endif

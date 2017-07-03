@@ -7,9 +7,9 @@ namespace Action
 // Import Rotation::Type, Rotation::Top, Rotation::Bottom, etc and Rotation::None.
 using namespace Rotation;
 
-const Type ResetEasy   = 254;
-const Type ResetNormal = 253;
-const Type Undo        = 252;
+const Type Reset    = 254;
+const Type Scramble = 253;
+const Type Undo     = 252;
 }
 
 namespace Controls

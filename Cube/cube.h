@@ -83,15 +83,13 @@ const uint8_t NumVertices = 8;
 const Facelet::Type* GetFacelets();	// Get pointer to 54 facelets, in LED order.
 void Reset();				// Reset cube to solved state.
 bool IsSolved();			// Returns true if the cube is in the solved state.
-void Scramble(uint8_t NumRotations);	// Perform NumRotations random rotations on the cube.
 
 // Brightness-related.
+void SetToBlack();			// Set all facelets to black. Previous configuration is lost.
 void DimAll();				// Dim all facelets of the cube.
+void BrightenAll();			// Brighten all facelets.
 void BrightenFacelet(Facelet::Type FaceletIdx);	// Brighten the given facelet.
 void BrightenFace(Rotation::Type Face);	// Brighten facelets according to a given rotation.
-
-// Rotation-related.
-void Rotate(Rotation::Type Face);	// Move all facelets of a face, according to a given rotation.
 
 #if DEBUG_CODE
 void Backup();				// Save the facelets used by the printing functions
@@ -101,9 +99,11 @@ void PrintUInt8(uint8_t Value);		// Print a uint8_t in binary using one face of 
 
 namespace Animation
 {
-void Rotate(Rotation::Type Face);
-void Victory();
+void Rotate(Rotation::Type Face);	// Initiate a rotation animation for the given face.
+void Victory();				// Initiate the victory animation.
 
+// Update the cube according to the current animation. Return the delay before
+// the next "frame". A returned delay of 0 indicates this is the last frame.
 uint16_t Next();
 }
 }

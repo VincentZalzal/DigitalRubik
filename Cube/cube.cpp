@@ -116,6 +116,37 @@ const FaceletIndex g_DebugIndexes[NumBackupFacelets] = {0, 3, 4, 1, 2, 5, 8, 7, 
 #endif
 #endif
 
+// Animation-related
+
+// On the AVR, delays will be about 2.2 ms longer because of the LEDs update.
+#define NUM_BRIGHT_FACELETS_DURING_VICTORY	25
+#define VICTORY_ANIMATION_DELAY_MS		400
+#define NUM_VICTORY_ANIMATION_ITER		15
+
+#define ROTATION_ANIMATION_VERSION		2
+
+typedef uint16_t (*AnimFuncType)();
+
+uint16_t NoAnim();
+
+uint16_t DoRotation();
+uint16_t DoVictory();
+
+uint16_t EndAnim();
+
+AnimFuncType   g_AnimFunc = &NoAnim;
+uint8_t        g_AnimStepIdx;
+Rotation::Type g_AnimRotationFace;
+
+uint16_t NoAnim()
+{
+	return 0;
+}
+
+#if ROTATION_ANIMATION_VERSION == 1
+
+#define ROTATION_DELAY_MS			200
+
 // Swap the facelets of the cube in clockwise order.
 void RotateCW(const FaceletIndex* f_Indices, uint8_t NumFacelets)
 {
@@ -124,7 +155,7 @@ void RotateCW(const FaceletIndex* f_Indices, uint8_t NumFacelets)
 
 	FaceletIndex CurIndex = pgm_read_byte(f_Indices++);
 	Facelet::Type Temp = g_Facelets[CurIndex];
-	
+
 	uint8_t Count = NumFacelets - 1;
 	do
 	{
@@ -193,36 +224,6 @@ void RotateFront(Rotation::Type Face)
 	}
 }
 
-// Animation-related
-
-// On the AVR, delays will be about 2.2 ms longer because of the LEDs update.
-#define ROTATION_DELAY_MS			200
-
-#define NUM_BRIGHT_FACELETS_DURING_VICTORY	25
-#define VICTORY_ANIMATION_DELAY_MS		400
-#define NUM_VICTORY_ANIMATION_ITER		15
-
-#define ROTATION_ANIMATION_VERSION		2
-
-typedef uint16_t (*AnimFuncType)();
-
-uint16_t NoAnim();
-
-uint16_t DoRotation();
-uint16_t DoVictory();
-
-uint16_t EndAnim();
-
-AnimFuncType   g_AnimFunc = &NoAnim;
-uint8_t        g_AnimStepIdx;
-Rotation::Type g_AnimRotationFace;
-
-uint16_t NoAnim()
-{
-	return 0;
-}
-
-#if ROTATION_ANIMATION_VERSION == 1
 uint16_t DoRotation()
 {
 	RotateSide(g_AnimRotationFace);
@@ -232,6 +233,7 @@ uint16_t DoRotation()
 		g_AnimFunc = &EndAnim;
 	return ROTATION_DELAY_MS;
 }
+
 #endif
 
 #if ROTATION_ANIMATION_VERSION != 1
@@ -653,24 +655,11 @@ bool IsSolved()
 	return true;
 }
 
-// Perform NumRotations random rotations on the cube.
-void Scramble(uint8_t NumRotations)
+// Set all facelets to black. Previous configuration is lost.
+void SetToBlack()
 {
-	STATIC_ASSERT(Rotation::Top == 0 && (Rotation::Bottom + Rotation::CCW) == Rotation::NumRotations - 1,
-		      "The rotation constants are used as indices below.");
-
-	if (NumRotations == 0)
-		return;
-	Rotation::Type PrevRot = Rand8::Get(0, Rotation::NumRotations - 1);
-	Rotate(PrevRot);
-	while (--NumRotations)
-	{
-		Rotation::Type CurRot = Rand8::Get(0, Rotation::NumRotations - 2);
-		if (CurRot >= Rotation::Opposite(PrevRot))
-			++CurRot;
-		Rotate(CurRot);
-		PrevRot = CurRot;
-	}
+	for (FaceletIndex i = 0; i < NumFacelets; ++i)
+		g_Facelets[i] = Facelet::Black;
 }
 
 // Dim all facelets of the cube.
@@ -678,6 +667,13 @@ void DimAll()
 {
 	for (FaceletIndex i = 0; i < NumFacelets; ++i)
 		g_Facelets[i] &= ~Facelet::Bright;
+}
+
+// Brighten all facelets.
+void BrightenAll()
+{
+	for (FaceletIndex i = 0; i < NumFacelets; ++i)
+		g_Facelets[i] |= Facelet::Bright;
 }
 
 // Brighten the given facelet.
@@ -703,17 +699,6 @@ void BrightenFace(Rotation::Type Face)
 		FaceletIndex Index = pgm_read_byte(f_Indices++);
 		g_Facelets[Index] |= Facelet::Bright;
 	}
-}
-
-// Move all facelets of a face, according to a given rotation.
-void Rotate(Rotation::Type Face)
-{
-	assert(Face < 2 * Rotation::CCW);
-	RotateSide(Face);
-	RotateSide(Face);
-	RotateSide(Face);
-	RotateFront(Face);
-	RotateFront(Face);
 }
 
 #if DEBUG_CODE
@@ -749,6 +734,7 @@ void PrintUInt8(uint8_t Value)
 namespace Animation
 {
 
+// Initiate a rotation animation for the given face.
 void Rotate(Rotation::Type Face)
 {
 	Cube::DimAll();
@@ -758,12 +744,15 @@ void Rotate(Rotation::Type Face)
 	g_AnimRotationFace = Face;
 }
 
+// Initiate the victory animation.
 void Victory()
 {
 	g_AnimFunc         = &DoVictory;
 	g_AnimStepIdx      = 0;
 }
 
+// Update the cube according to the current animation. Return the delay before
+// the next "frame". A returned delay of 0 indicates this is the last frame.
 uint16_t Next()
 {
 	return (*g_AnimFunc)();

@@ -82,8 +82,8 @@ const uint8_t f_SensorsPerUndo[Cube::NumVertices][NumSensorsPerUndo] PROGMEM =
 };
 const uint8_t f_SensorsPerReset[NumResetOps][NumSensorsPerReset] PROGMEM =
 {
-	{16, 17, 18, 19},	// ResetEasy, green face
-	{ 4,  5,  6,  7}	// ResetNormal, red face
+	{16, 17, 18, 19},	// Reset, green face
+	{ 4,  5,  6,  7}	// Scramble, red face
 };
 #else
 const uint8_t f_SensorsPerRotation[Cube::NumFaces][NumSensorsPerRotation] PROGMEM =
@@ -108,8 +108,8 @@ const uint8_t f_SensorsPerUndo[Cube::NumVertices][NumSensorsPerUndo] PROGMEM =
 };
 const uint8_t f_SensorsPerReset[NumResetOps][NumSensorsPerReset] PROGMEM =
 {
-	{14, 15, 12, 13},	// ResetEasy, green face
-	{ 1,  0,  3,  2}	// ResetNormal, red face
+	{14, 15, 12, 13},	// Reset, green face
+	{ 1,  0,  3,  2}	// Scramble, red face
 };
 #endif
 
@@ -211,7 +211,7 @@ Action::Type DetectReset(int8_t CounterThreshold)
 		}
 		if (i == NumSensorsPerReset)
 		{
-			return (ResetIdx == 0 ? Action::ResetEasy : Action::ResetNormal);
+			return (ResetIdx == 0 ? Action::Reset : Action::Scramble);
 		}
 	}
 	

@@ -5,8 +5,10 @@
 #include "../Cube/cube.h"
 #include "../Cube/controls.h"
 
-#define NUM_SCRAMBLE_ROTATIONS_NORMAL	30
-#define NUM_SCRAMBLE_ROTATIONS_EASY	1
+#define RESET_DELAY_MS		1000
+#define ERROR_DELAY_MS		250
+
+const uint8_t NumScrambleRotations = 30;
 
 void Init()
 {
@@ -42,14 +44,6 @@ void Init()
 	Rand8::Seed(Seed);
 }
 
-void Reset()
-{
-	Cube::Reset();
-	Rings::Reset();
-	Controls::ResetSensors();
-	Controls::ResetActionQueue();
-}
-
 // This function is necessary to be able to sleep using a delay that isn't
 // known at compile-time.
 void Sleep(uint16_t DelayMs)
@@ -67,93 +61,130 @@ void Animate(bool HiSpeed = false)
 		if (NextDelayMs == 0)
 			break;
 		if (HiSpeed)
-			NextDelayMs = (NextDelayMs + 7) >> 3; // ceil(NextDelayMs / 8)
+			NextDelayMs = (NextDelayMs + 3) >> 2; // ceil(NextDelayMs / 4)
 		Sleep(NextDelayMs);
+	}
+}
+
+// Actions
+
+void Reset()
+{
+	// Fade to black.
+	Cube::SetToBlack();
+	Leds::Update();
+	_delay_ms(RESET_DELAY_MS);
+
+	// Set cube to its solved state.
+	Cube::Reset();
+	Leds::Update();
+
+	Controls::ResetActionQueue();
+}
+
+// Perform some random (animated) rotations.
+void Scramble()
+{
+	STATIC_ASSERT(Rotation::Top == 0 && (Rotation::Bottom + Rotation::CCW) == Rotation::NumRotations - 1,
+		      "The rotation constants are used as indices below.");
+	const bool HiSpeed = true;
+
+	uint8_t NumRotations = NumScrambleRotations;
+	assert(NumRotations > 0);
+
+	// Choose first rotation randomly.
+	Rotation::Type PrevRot = Rand8::Get(0, Rotation::NumRotations - 1);
+	
+	// Perform the rotation animation at high speed.
+	Cube::Animation::Rotate(PrevRot);
+	Animate(HiSpeed);
+
+	while (--NumRotations)
+	{
+		// Choose the next rotation randomly so that it doesn't cancel
+		// the previous one.
+		Rotation::Type CurRot = Rand8::Get(0, Rotation::NumRotations - 2);
+		if (CurRot >= Rotation::Opposite(PrevRot))
+			++CurRot;
+
+		// Perform the rotation animation at high speed.
+		Cube::Animation::Rotate(CurRot);
+		Animate(HiSpeed);
+
+		PrevRot = CurRot;
+	}
+
+	// Undo makes no sense after a scramble anyway.
+	Controls::ResetActionQueue();
+}
+
+void Undo()
+{
+	// If not empty, pop action queue and do the
+	// opposite rotation.
+	Rotation::Type CurRotation = Controls::PopAction();
+	if (CurRotation != Rotation::None)
+	{
+		Cube::Animation::Rotate(Rotation::Opposite(CurRotation));
+		Animate();
+	}
+	else
+	{
+		// Nothing to undo, flash to indicate that fact.
+		Cube::BrightenAll();
+		Leds::Update();
+		_delay_ms(ERROR_DELAY_MS);
+		Cube::DimAll();
+		Leds::Update();
+	}
+}
+
+void Rotate(Rotation::Type CurRotation)
+{
+	// Add the rotation to the action queue.
+	Controls::PushAction(CurRotation);
+
+	// Perform the rotation animation.
+	Cube::Animation::Rotate(CurRotation);
+	Animate();
+
+	// If the cube is solved, perform the victory animation.
+	if (Cube::IsSolved())
+	{
+		Cube::Animation::Victory();
+		Animate();
 	}
 }
 
 int main(void)
 {
 	Init();
-	
-	uint8_t NumScrambleRotations = NUM_SCRAMBLE_ROTATIONS_NORMAL;
+	Cube::Reset();
+	Rings::Reset();
+	Controls::ResetSensors();
+	Controls::ResetActionQueue();
+	Leds::Update();
+
 	for (;;)
 	{
-		Reset();
-		Cube::Scramble(NumScrambleRotations);
-		Leds::Update();
+		Rings::Read();
+		bool CubeHasChanged = Controls::UpdateCubeBrightness();
+		Action::Type CurAction = Controls::DetermineAction();
 
-		bool MustReset = false;
-		while (!Cube::IsSolved() && !MustReset)
+		switch (CurAction)
 		{
-			Rings::Read();
-			bool CubeHasChanged = Controls::UpdateCubeBrightness();
-			
-			Action::Type CurAction = Controls::DetermineAction();
-			Rotation::Type CurRotation = Rotation::None;
-			switch (CurAction)
-			{
-			case Action::ResetEasy:
-				NumScrambleRotations = NUM_SCRAMBLE_ROTATIONS_EASY;
-				MustReset = true;
-				break;
-			case Action::ResetNormal:
-				NumScrambleRotations = NUM_SCRAMBLE_ROTATIONS_NORMAL;
-				MustReset = true;
-				break;
-			case Action::None:
-				if (CubeHasChanged)
-					Leds::Update();
-				break;
-			case Action::Undo:
-				// If not empty, pop action queue and do the
-				// opposite rotation.
-				CurRotation = Controls::PopAction();
-				if (CurRotation != Rotation::None)
-					CurRotation = Rotation::Opposite(CurRotation);
-				break;
-			default:
-				// This is a rotation, add it to the action queue.
-				CurRotation = CurAction;
-				Controls::PushAction(CurRotation);
-				break;
-			}
-			
-			if (CurRotation != Rotation::None)
-			{
-				Cube::Animation::Rotate(CurRotation);
-				Animate();
-				Rings::Reset();
-				Controls::ResetSensors();
-			}
+		case Action::None:     if (CubeHasChanged) Leds::Update(); break;
+		case Action::Reset:    Reset();                            break;
+		case Action::Scramble: Scramble();                         break;
+		case Action::Undo:     Undo();                             break;
+		default:               Rotate(CurAction);                  break;
 		}
 
-		if (!MustReset)
+		// If an action has been done, reset the sensors.
+		if (CurAction != Action::None)
 		{
-			// Perform victory animation.
-			Cube::Animation::Victory();
-			Animate();
-
-			// Wait for reset command.
-			while (!MustReset)
-			{
-				Rings::Read();
-				Action::Type CurAction = Controls::DetermineAction();
-				switch (CurAction)
-				{
-				case Action::ResetEasy:
-					NumScrambleRotations = NUM_SCRAMBLE_ROTATIONS_EASY;
-					MustReset = true;
-					break;
-				case Action::ResetNormal:
-					NumScrambleRotations = NUM_SCRAMBLE_ROTATIONS_NORMAL;
-					MustReset = true;
-					break;
-				default:
-					// Ignore all other actions
-					break;
-				}
-			}
+			Rings::Reset();
+			Controls::ResetSensors();
 		}
 	}
 }

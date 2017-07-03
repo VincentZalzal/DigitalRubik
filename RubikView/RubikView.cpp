@@ -21,7 +21,6 @@ SGLState::SGLState()
 {
 	// Cube initialization
 	Cube::Reset();
-	Cube::Scramble(30);
 	m_CurOp  = NO_OP;
 	m_OpTime = 0.0;
 

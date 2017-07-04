@@ -48,7 +48,7 @@ const Facelet::Type f_SensorToFacelet[Controls::NumSensors] PROGMEM =
 {
 	 8,  6,  0,  4,
 	17, 15,  9, 13,
-	45, 47, 51, 53,
+	53, 47, 45, 51,
 	44, 42, 36, 40,
 	26, 20, 24, 18,
 	27, 31, 33, 35
@@ -89,18 +89,18 @@ const uint8_t f_SensorsPerReset[NumResetOps][NumSensorsPerReset] PROGMEM =
 const uint8_t f_SensorsPerRotation[Cube::NumFaces][NumSensorsPerRotation] PROGMEM =
 {
 	{ 1,  0,  6,  7, 22, 23, 14, 15},	// top
-	{18, 19,  4,  6, 11, 10, 15, 13},	// front
-	{19, 17, 21, 22,  9, 11,  0,  2},	// right
-	{17, 16, 12, 14,  8,  9,  7,  5},	// back
-	{16, 18,  3,  1, 10,  8, 23, 20},	// left
+	{18, 19,  4,  6,  8,  9, 15, 13},	// front
+	{19, 17, 21, 22, 11,  8,  0,  2},	// right
+	{17, 16, 12, 14, 10, 11,  7,  5},	// back
+	{16, 18,  3,  1,  9, 10, 23, 20},	// left
 	{20, 21,  5,  4,  2,  3, 13, 12}	// bottom
 };
 const uint8_t f_SensorsPerUndo[Cube::NumVertices][NumSensorsPerUndo] PROGMEM =
 {
-	{ 8, 23, 14},
-	{ 9,  7, 22},
-	{10, 15,  1},
-	{11,  0,  6},
+	{10, 23, 14},
+	{11,  7, 22},
+	{ 9, 15,  1},
+	{ 8,  0,  6},
 	{18,  3, 13},
 	{19,  4,  2},
 	{16, 12, 20},

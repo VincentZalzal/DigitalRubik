@@ -5,10 +5,10 @@
 #include "../Cube/cube.h"
 #include "../Cube/controls.h"
 
-#define RESET_DELAY_MS		1000
-#define ERROR_DELAY_MS		250
+#define RESET_DELAY_MS		100
+#define ERROR_DELAY_MS		100
 
-const uint8_t NumScrambleRotations = 30;
+const uint8_t NumScrambleRotations = 15;
 
 void Init()
 {
@@ -52,7 +52,7 @@ void Sleep(uint16_t DelayMs)
 		_delay_ms(1);
 }
 
-void Animate(bool HiSpeed = false)
+void Animate()
 {
 	for (;;)
 	{
@@ -60,8 +60,6 @@ void Animate(bool HiSpeed = false)
 		Leds::Update();
 		if (NextDelayMs == 0)
 			break;
-		if (HiSpeed)
-			NextDelayMs = (NextDelayMs + 3) >> 2; // ceil(NextDelayMs / 4)
 		Sleep(NextDelayMs);
 	}
 }
@@ -87,7 +85,6 @@ void Scramble()
 {
 	STATIC_ASSERT(Rotation::Top == 0 && (Rotation::Bottom + Rotation::CCW) == Rotation::NumRotations - 1,
 		      "The rotation constants are used as indices below.");
-	const bool HiSpeed = true;
 
 	uint8_t NumRotations = NumScrambleRotations;
 	assert(NumRotations > 0);
@@ -95,9 +92,9 @@ void Scramble()
 	// Choose first rotation randomly.
 	Rotation::Type PrevRot = Rand8::Get(0, Rotation::NumRotations - 1);
 	
-	// Perform the rotation animation at high speed.
+	// Perform the rotation animation.
 	Cube::Animation::Rotate(PrevRot);
-	Animate(HiSpeed);
+	Animate();
 
 	while (--NumRotations)
 	{
@@ -107,9 +104,9 @@ void Scramble()
 		if (CurRot >= Rotation::Opposite(PrevRot))
 			++CurRot;
 
-		// Perform the rotation animation at high speed.
+		// Perform the rotation animation.
 		Cube::Animation::Rotate(CurRot);
-		Animate(HiSpeed);
+		Animate();
 
 		PrevRot = CurRot;
 	}

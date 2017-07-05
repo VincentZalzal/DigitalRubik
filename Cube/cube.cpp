@@ -354,7 +354,7 @@ uint16_t DoRotationFadeToBlack()
 		g_AnimFunc = &DoRotationSetFinalColors;
 		g_AnimStepIdx = 0;
 	}
-	return 32;
+	return 16;
 }
 
 uint16_t DoRotationSetFinalColors()
@@ -376,7 +376,7 @@ uint16_t DoRotationSetFinalColors()
 	if (++g_AnimStepIdx == 12)
 		g_AnimFunc = &EndAnim;
 
-	return 32;
+	return 16;
 }
 
 #endif

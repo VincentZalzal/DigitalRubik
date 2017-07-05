@@ -308,7 +308,14 @@ Action::Type DetermineAction()
 	if (CurAction != Action::None)
 		return CurAction;
 
-	return DetectRotation(DetectionThreshold);
+	// The first call ensures there is only one active rotation, whatever
+	// the threshold. The second call ensures the rotation is above the
+	// detection threshold.
+	CurAction = DetectRotation(1);
+	if (CurAction != Action::None)
+		return DetectRotation(DetectionThreshold);
+
+	return Action::None;
 }
 
 // Added the given rotation to the front of the queue.
